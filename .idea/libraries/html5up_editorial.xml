@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="html5up-editorial">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/static/html5up-editorial.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

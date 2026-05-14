@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div id="wrapper">
+    <div id="main">
+        <div class="inner">
+
+            <header id="header">
+                <a href="{% url 'home' %}" class="logo"><strong>Body Paint / </strong> Carrito</a>
+                <a href="{% url 'home' %}#productos" class="button primary">Seguir comprando</a>
+            </header>
+
+            <section>
+                <header class="major">
+                    <h2>Tu carrito de compras</h2>
+                    <p>Cliente: {{ user_email }}</p>
+                </header>
+
+                {% if items %}
+                <div class="table-wrapper">
+                    <table class="alt">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Precio</th>
+                                <th>Subtotal</th>
+                                <th>Acci&oacute;n</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.product.name }}</strong><br />
+                                    <span class="muted">Stock disponible: {{ item.product.stock }}</span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{% url 'update_cart_item' item.product.id %}">
+                                        {% csrf_token %}
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="0" max="{{ item.product.stock }}" style="width: 80px;" />
+                                        <button class="button small" type="submit">Actualizar</button>
+                                    </form>
+                                </td>
+                                <td>${{ item.product.price }}</td>
+                                <td>${{ item.subtotal }}</td>
+                                <td>
+                                    <form method="POST" action="{% url 'remove_cart_item' item.product.id %}">
+                                        {% csrf_token %}
+                                        <button class="button secondary" type="submit">Quitar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="actions" style="margin-top: 24px; justify-content: space-between; display: flex; flex-wrap: wrap; gap: 12px;">
+                        <span class="button" style="background: #7a4bb2;">Total: ${{ total }}</span>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                            <a href="{% url 'home' %}#productos" class="button primary">Continuar comprando</a>
+                            <form method="POST" action="{% url 'checkout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="button">Confirmar compra</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="box">
+                    <h3>El carrito est&aacute; vac&iacute;o</h3>
+                    <p>Agrega productos desde el cat&aacute;logo principal para empezar tu pedido.</p>
+                    <ul class="actions special">
+                        <li><a href="{% url 'home' %}#productos" class="button primary">VER CAT&Aacute;LOGO</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </section>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

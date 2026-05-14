@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div id="wrapper">
+    <div id="main">
+        <div class="inner">
+            <header id="header">
+                <a href="{% url 'home' %}" class="logo"><strong>Body Paint / </strong> Inicio</a>
+                <ul class="icons">
+                    <li><a href="{% url 'cart' %}" class="icon solid fa-shopping-cart" aria-label="Carrito de compras"><span class="label">Carrito</span></a></li>
+                </ul>
+            </header>
+
+            <section id="banner">
+                <div class="content">
+                    <header>
+                        <h1>Expertos en el<br />arte de la piel</h1>
+                        <p>Tu tienda online de insumos premium para Body Painting.</p>
+                    </header>
+                </div>
+                <span class="image object">
+                    <img src="{% static 'images/inicio.png' %}" alt="Body Paint" />
+                </span>
+            </section>
+
+            <section id="productos">
+                <header class="major">
+                    <h2>Cat&aacute;logo de Art&iacute;culos</h2>
+                </header>
+                <div class="posts">
+                    {% for producto in products %}
+                    <article>
+                        <a href="#" class="image">
+                            {% if producto.image %}
+                            <img src="{{ producto.image }}" alt="{{ producto.name }}" />
+                            {% else %}
+                            <img src="{% static 'images/default.jpg' %}" alt="Sin imagen" />
+                            {% endif %}
+                        </a>
+                        <h3>{{ producto.name }}</h3>
+                        <p>{{ producto.description|truncatechars:120 }}</p>
+                        <ul class="actions">
+                            <li>
+                                <form method="POST" action="{% url 'add_to_cart' producto.id %}">
+                                    {% csrf_token %}
+                                    <input type="number" name="quantity" value="1" min="1" max="{{ producto.stock|default:1 }}" />
+                                    <button type="submit" class="button">Agregar</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </article>
+                    {% empty %}
+                    <p>No hay productos disponibles.</p>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

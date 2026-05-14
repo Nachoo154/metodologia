@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Metodología</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        header h1 {
+            font-size: 24px;
+        }
+        
+        header a {
+            background: #666;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        header a:hover {
+            background: #555;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            margin-bottom: 30px;
+            color: #1a1a2e;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #1a1a2e;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        button, .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-cancel {
+            background: #ccc;
+            color: #333;
+        }
+        
+        .btn-cancel:hover {
+            background: #bbb;
+            transform: translateY(-2px);
+        }
+        
+        .error {
+            background-color: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>{{ title }}</h1>
+        <a href="/admin/">← Volver</a>
+    </header>
+    
+    <div class="container">
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="current_image" value="{{ product.image|default:'' }}">
+            
+            <div class="form-group">
+                <label for="name">Nombre del Producto</label>
+                <input type="text" id="name" name="name" value="{{ product.name|default:'' }}" placeholder="Ej: Laptop" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Descripción</label>
+                <textarea id="description" name="description" placeholder="Describe el producto..." required>{{ product.description|default:'' }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="price">Precio</label>
+                <input type="number" id="price" name="price" value="{{ product.price|default:'' }}" placeholder="0.00" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="stock">Stock</label>
+                <input type="number" id="stock" name="stock" value="{{ product.stock|default:'0' }}" placeholder="Cantidad disponible" min="0" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="image">Imagen</label>
+                {% if product.image %}
+                    <p style="margin-bottom: 10px;">
+                        <img src="{{ product.image }}" alt="{{ product.name }}" style="max-width: 160px; max-height: 120px; object-fit: cover;">
+                    </p>
+                {% endif %}
+                <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp,image/gif" {% if not product.image %}required{% endif %}>
+            </div>
+
+            <div class="form-group">
+                <label for="image_url">O URL de imagen</label>
+                <input type="url" id="image_url" name="image_url" value="" placeholder="https://...">
+            </div>
+            
+            <div class="button-group">
+                <button type="submit">{{ button_text }}</button>
+                <a href="/admin/" class="btn btn-cancel">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
