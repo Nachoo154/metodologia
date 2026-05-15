@@ -25,6 +25,26 @@
             margin: 0 auto;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .topbar-brand {
+            color: #fff;
+            font-weight: 900;
+            font-size: 2.15rem;
+            letter-spacing: -0.04em;
+            text-transform: uppercase;
+            text-decoration: none;
+            padding: 0;
+            margin: 0;
+            text-shadow: 0 2px 14px rgba(255, 255, 255, 0.16);
+        }
+
+        .topbar-links {
+            display: flex;
+            align-items: center;
             gap: 14px;
             flex-wrap: wrap;
         }
@@ -41,11 +61,31 @@
             background: rgba(255, 255, 255, 0.15);
         }
 
-        .topbar-brand {
+        .floating-cart-button {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 52px;
+            height: 52px;
+            padding: 0;
+            background-color: #f56a6a;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
             font-weight: 700;
-            font-size: 1.3rem;
-            letter-spacing: 0;
-            margin-right: 8px;
+            font-size: 1.1rem;
+            border-radius: 999px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .floating-cart-button:hover {
+            background-color: #f67878;
         }
 
         #banner .content header p {
@@ -126,15 +166,19 @@
 <body class="is-preload">
     <header class="topbar">
         <nav class="topbar-nav">
+            {% if request.path != '/' %}
             <a href="{% url 'home' %}" class="topbar-brand">Body Paint</a>
-            <a href="{% url 'home' %}#productos">Productos</a>
-            <a href="{% url 'cart' %}">Carrito</a>
-            {% if request.session.user_email %}
-            <a href="{% url 'logout' %}">Cerrar sesi&oacute;n</a>
             {% else %}
-            <a href="{% url 'login' %}">Iniciar sesi&oacute;n</a>
-            <a href="{% url 'register' %}">Registrarse</a>
+            <span class="topbar-brand">Body Paint</span>
             {% endif %}
+            <div class="topbar-links">
+                <a href="{% url 'home' %}#productos">Productos</a>
+                {% if request.session.user_email %}
+                <a href="{% url 'logout' %}">Cerrar sesi&oacute;n</a>
+                {% else %}
+                <a href="{% url 'login' %}">Iniciar sesi&oacute;n</a>
+                {% endif %}
+            </div>
         </nav>
     </header>
 

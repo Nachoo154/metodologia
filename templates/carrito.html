@@ -57,7 +57,7 @@
                     </table>
 
                     <div class="actions" style="margin-top: 24px; justify-content: space-between; display: flex; flex-wrap: wrap; gap: 12px;">
-                        <span class="button" style="background: #7a4bb2;">Total: ${{ total }}</span>
+                        <span class="button primary" style="cursor: default;">Total: ${{ total }}</span>
                         <div style="display:flex;gap:10px;flex-wrap:wrap;">
                             <a href="{% url 'home' %}#productos" class="button primary">Continuar comprando</a>
                             <form method="POST" action="{% url 'checkout' %}">

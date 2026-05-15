@@ -452,6 +452,7 @@ def product_delete(request, id):
     return redirect("/products/")
 
 
+@require_user
 def cart_view(request):
     payload = get_cart_payload(request)
     items = []
@@ -475,6 +476,7 @@ def cart_view(request):
     })
 
 
+@require_user
 def add_to_cart(request, id):
     if request.method != "POST":
         return redirect("/products/")
@@ -507,6 +509,7 @@ def add_to_cart(request, id):
     return redirect("/cart/")
 
 
+@require_user
 def cart_data(request):
     payload = get_cart_payload(request)
     return JsonResponse({
@@ -528,6 +531,7 @@ def admin_purchases_data(request):
         return JsonResponse({"status": "error", "error": str(e)}, status=500)
 
 
+@require_user
 def update_cart_item(request, id):
     if request.method != "POST":
         return redirect("/cart/")
@@ -546,6 +550,7 @@ def update_cart_item(request, id):
     return redirect("/cart/")
 
 
+@require_user
 def remove_cart_item(request, id):
     if request.method == "POST":
         cart = request.session.get("cart", {})
