@@ -18,3 +18,9 @@ if not url or not anon_key:
 
 supabase = create_client(url, service_role_key or anon_key)
 supabase_auth = create_client(url, anon_key)
+
+
+def get_user_supabase(access_token):
+    client = create_client(url, anon_key)
+    client.postgrest.auth(access_token)
+    return client
