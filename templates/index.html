@@ -7,10 +7,9 @@
         <div class="inner">
             <header id="header">
                 <a href="{% url 'home' %}" class="logo"><strong>Body Paint / </strong> Inicio</a>
-                <ul class="icons">
-                    <li><a href="{% url 'cart' %}" class="icon solid fa-shopping-cart" aria-label="Carrito de compras"><span class="label">Carrito</span></a></li>
-                </ul>
             </header>
+
+            <a href="{% url 'cart' %}" class="floating-cart-button"><i class="fas fa-shopping-cart"></i></a>
 
             <section id="banner">
                 <div class="content">
