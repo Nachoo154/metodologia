@@ -20,10 +20,11 @@ from services.product_service import (
     upload_image,
 )
 from services.purchase_service import (
-    create_purchase_rows,
+    finish_purchase,
     get_profile_by_email,
     get_recent_purchases,
 )
+from services.supabase_client import get_user_supabase
 
 
 logger = logging.getLogger(__name__)
@@ -298,17 +299,47 @@ def admin_login(request):
     return JsonResponse({"error": "Metodo no permitido"}, status=405)
 
 
+def _enrich_purchases(purchases):
+    for purchase in purchases:
+        product = purchase.get("products") or {}
+        price = product.get("price")
+        amount = purchase.get("amount") or 0
+        if price is not None:
+            try:
+                purchase["total_amount"] = round(float(price) * int(amount), 2)
+            except (TypeError, ValueError):
+                purchase["total_amount"] = None
+        else:
+            purchase["total_amount"] = None
+    return purchases
+
+
 @require_admin
 def admin_dashboard(request):
+    products = []
+    purchases = []
+    errors = []
+
     try:
         res = get_all_products()
         products = res.data if res.data else []
-        purchases_res = get_recent_purchases(50)
-        purchases = purchases_res.data if purchases_res.data else []
-        return render(request, "admin_dashboard.html", {"products": products, "purchases": purchases})
     except Exception as e:
-        logger.error(f"Admin dashboard error: {str(e)}")
-        return render(request, "admin_dashboard.html", {"products": [], "purchases": [], "error": str(e)})
+        logger.error(f"Admin dashboard products error: {str(e)}")
+        errors.append(f"Productos: {e}")
+
+    try:
+        purchases_res = get_recent_purchases(50)
+        raw = purchases_res.data if purchases_res.data else []
+        logger.info(f"Admin dashboard: fetched {len(raw)} purchases")
+        purchases = _enrich_purchases(raw)
+    except Exception as e:
+        logger.exception("Admin dashboard purchases error")
+        errors.append(f"Compras: {e}")
+
+    context = {"products": products, "purchases": purchases}
+    if errors:
+        context["error"] = " | ".join(errors)
+    return render(request, "admin_dashboard.html", context)
 
 
 @require_admin
@@ -469,10 +500,13 @@ def cart_view(request):
             "subtotal": item["subtotal"],
         })
 
+    checkout_success = request.session.pop("checkout_success", False)
+
     return render(request, "carrito.html", {
         "items": items,
         "total": payload["total"],
         "user_email": request.session.get("user_email"),
+        "checkout_success": checkout_success,
     })
 
 
@@ -524,10 +558,12 @@ def cart_data(request):
 def admin_purchases_data(request):
     try:
         purchases_res = get_recent_purchases(100)
-        purchases = purchases_res.data if purchases_res.data else []
-        return JsonResponse({"status": "ok", "purchases": purchases})
+        raw = purchases_res.data if purchases_res.data else []
+        logger.info(f"admin_purchases_data: {len(raw)} rows")
+        purchases = _enrich_purchases(raw)
+        return JsonResponse({"status": "ok", "count": len(purchases), "purchases": purchases})
     except Exception as e:
-        logger.error(f"Admin purchases data error: {str(e)}")
+        logger.exception("Admin purchases data error")
         return JsonResponse({"status": "error", "error": str(e)}, status=500)
 
 
@@ -562,6 +598,47 @@ def remove_cart_item(request, id):
 
 
 @require_user
+def checkout_confirm(request):
+    payload = get_cart_payload(request)
+    if not payload["items"]:
+        return redirect("/cart/")
+
+    checkout_error = request.session.pop("checkout_error", None)
+
+    user_email = request.session.get("user_email")
+    profile = None
+    if user_email:
+        try:
+            profile_res = get_profile_by_email(user_email)
+            profile = profile_res.data[0] if profile_res.data else None
+        except Exception as e:
+            logger.error(f"Checkout confirm profile error: {str(e)}")
+
+    items = []
+    for item in payload["items"]:
+        items.append({
+            "product": {
+                "id": item["id"],
+                "name": item["name"],
+                "price": item["price"],
+                "image": item["image"],
+                "stock": item["stock"],
+            },
+            "quantity": item["quantity"],
+            "subtotal": item["subtotal"],
+        })
+
+    return render(request, "cart_confirm.html", {
+        "items": items,
+        "total": payload["total"],
+        "cart_count": payload["cart_count"],
+        "user_email": user_email,
+        "profile": profile,
+        "checkout_error": checkout_error,
+    })
+
+
+@require_user
 def checkout(request):
     if request.method != "POST":
         return redirect("/cart/")
@@ -570,28 +647,53 @@ def checkout(request):
     if not cart:
         return redirect("/cart/")
 
+    user_token = request.session.get("user_token")
     user_email = request.session.get("user_email")
-    if not user_email:
+    if not user_token or not user_email:
         return redirect("/login/")
 
-    profile_res = get_profile_by_email(user_email)
-    profile = profile_res.data[0] if profile_res.data else None
+    try:
+        profile_res = get_profile_by_email(user_email)
+        profile = profile_res.data[0] if profile_res.data else None
+    except Exception as e:
+        logger.exception("Checkout profile lookup error")
+        request.session["checkout_error"] = "No se pudo verificar tu perfil. Intentá de nuevo."
+        request.session.modified = True
+        return redirect("/cart/confirm/")
+
     if not profile:
-        return redirect("/cart/")
+        request.session["checkout_error"] = "No encontramos tu perfil de usuario."
+        request.session.modified = True
+        return redirect("/cart/confirm/")
 
-    rows = []
-    for product_id, quantity in cart.items():
+    client = get_user_supabase(user_token)
+    processed = []
+
+    for product_id, quantity in list(cart.items()):
         qty = max(int(quantity), 1)
-        rows.append({
-            "product_id": int(product_id),
-            "user_id": int(profile["id"]),
-            "amount": qty,
-            "status": "created",
-        })
-
-    create_purchase_rows(rows)
+        try:
+            finish_purchase(client, profile["id"], product_id, qty)
+            processed.append(product_id)
+        except Exception as e:
+            logger.exception(f"finish_purchase failed for product {product_id}")
+            for pid in processed:
+                cart.pop(pid, None)
+            request.session["cart"] = cart
+            request.session["checkout_error"] = _extract_rpc_message(e)
+            request.session.modified = True
+            return redirect("/cart/confirm/")
 
     request.session["cart"] = {}
+    request.session["checkout_success"] = True
     request.session.modified = True
     return redirect("/cart/")
+
+
+def _extract_rpc_message(error):
+    msg = getattr(error, "message", None) or str(error)
+    for line in str(msg).splitlines():
+        line = line.strip()
+        if line:
+            return line
+    return "No se pudo completar la compra. Intentá de nuevo."
 

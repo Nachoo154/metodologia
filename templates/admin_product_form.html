@@ -172,19 +172,9 @@
                 <label for="stock">Stock</label>
                 <input type="number" id="stock" name="stock" value="{{ product.stock|default:'0' }}" placeholder="Cantidad disponible" min="0" required>
             </div>
-            
-            <div class="form-group">
-                <label for="image">Imagen</label>
-                {% if product.image %}
-                    <p style="margin-bottom: 10px;">
-                        <img src="{{ product.image }}" alt="{{ product.name }}" style="max-width: 160px; max-height: 120px; object-fit: cover;">
-                    </p>
-                {% endif %}
-                <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp,image/gif" {% if not product.image %}required{% endif %}>
-            </div>
 
             <div class="form-group">
-                <label for="image_url">O URL de imagen</label>
+                <label for="image_url">URL de imagen</label>
                 <input type="url" id="image_url" name="image_url" value="" placeholder="https://...">
             </div>
             
