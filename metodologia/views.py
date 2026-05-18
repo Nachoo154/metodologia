@@ -45,6 +45,10 @@ def is_valid_phone(tel):
     return bool(re.match(r"^[0-9 +().-]{7,20}$", tel)) if tel else True
 
 
+def is_valid_name(name):
+    return bool(re.match(r"^[A-Za-zÀ-ÿ ]{2,50}$", name))
+
+
 def supabase_error_message(exc):
     message = str(exc).lower()
     if "email rate limit exceeded" in message or "rate limit" in message:
@@ -184,6 +188,11 @@ def register(request):
         if not first_name or not last_name or not email or not password:
             return render(request, "register.html", {
                 "error": "Todos los campos excepto telefono son obligatorios",
+                "form": form_data,
+            })
+        if not is_valid_name(first_name) or not is_valid_name(last_name):
+            return render(request, "register.html", {
+                "error": "Nombre y apellido solo pueden contener letras y espacios (2-50 caracteres)",
                 "form": form_data,
             })
         if not is_valid_email(email):
