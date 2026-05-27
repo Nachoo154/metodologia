@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div id="wrapper">
+    <div id="main">
+        <div class="inner">
+            <section>
+                <header class="main">
+                    <h1 style="text-align:center;">Registro</h1>
+                </header>
+
+                {% if error %}
+                    <div class="box" style="border-left:4px solid #d9534f; margin-bottom:16px;">
+                        <strong>{{ error }}</strong>
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="row gtr-uniform">
+                        <div class="col-6 col-12-xsmall">
+                            <input type="text" name="first_name" placeholder="Nombre" value="{{ form.first_name|default:'' }}" required>
+                        </div>
+                        <div class="col-6 col-12-xsmall">
+                            <input type="text" name="last_name" placeholder="Apellido" value="{{ form.last_name|default:'' }}" required>
+                        </div>
+                        <div class="col-6 col-12-xsmall">
+                            <input type="email" name="email" placeholder="Email" value="{{ form.email|default:'' }}" required>
+                        </div>
+                        <div class="col-6 col-12-xsmall">
+                            <input type="text" name="tel" placeholder="Tel&eacute;fono (opcional)" value="{{ form.tel|default:'' }}">
+                        </div>
+                        <div class="col-12">
+                            <input type="password" name="password" placeholder="Contrase&ntilde;a" required>
+                        </div>
+                        <div class="col-12">
+                            <ul class="actions special">
+                                <li><input type="submit" value="Registrarse" class="primary"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </form>
+
+                <p style="text-align:center;">&iquest;Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesi&oacute;n</a></p>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

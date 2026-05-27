@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    button[type="submit"] {
+        margin-top: 10px;
+    }
+</style>
+
+<div id="wrapper">
+    <div id="main">
+        <div class="inner">
+
+            <header id="header">
+                <a href="{% url 'home' %}" class="logo">
+                    <strong>Body Paint / </strong> Panel vendedor
+                </a>
+            </header>
+
+            <section>
+                <header class="major">
+                    <h2>Pedidos</h2>
+                </header>
+
+                <form method="GET" style="margin-bottom: 2rem;">
+
+                    <select name="status">
+
+                        <option value="" {% if not status_filter %}selected{% endif %}>
+                            Todos
+                        </option>
+
+                        <option value="pending_payment" {% if status_filter == "pending_payment" %}selected{% endif %}>
+                            Pendiente de pago
+                        </option>
+
+                        <option value="paid" {% if status_filter == "paid" %}selected{% endif %}>
+                            Pagado
+                        </option>
+
+                        <option value="sent" {% if status_filter == "sent" %}selected{% endif %}>
+                            Enviado
+                        </option>
+
+                        <option value="delivered" {% if status_filter == "delivered" %}selected{% endif %}>
+                            Entregado
+                        </option>
+
+                        <option value="cancelled" {% if status_filter == "cancelled" %}selected{% endif %}>
+                            Cancelado
+                        </option>
+
+                    </select>
+
+                    <button type="submit">
+                        Filtrar
+                    </button>
+
+                </form>
+
+                {% if purchases %}
+
+                {% for purchase in purchases %}
+                <article style="border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem;">
+                    <h3>Pedido #{{ purchase.id }}</h3>
+
+                    <p>
+                        <strong>Estado:</strong>
+
+                        {% if purchase.status == "pending_payment" %}
+                            Pendiente de pago
+
+                        {% elif purchase.status == "paid" %}
+                            Pagado
+
+                        {% elif purchase.status == "sent" %}
+                            Enviado
+
+                        {% elif purchase.status == "delivered" %}
+                            Entregado
+
+                        {% elif purchase.status == "cancelled" %}
+                            Cancelado
+
+                        {% else %}
+                            {{ purchase.status|title }}
+
+                        {% endif %}
+                    </p>
+
+                    <p><strong>Cantidad:</strong> {{ purchase.amount }}</p>
+                    <p><strong>Producto:</strong> {{ purchase.products.name }}</p>
+                    <p><strong>Cliente:</strong> {{ purchase.profiles.email }}</p>
+                    <p><strong>Fecha:</strong> {{ purchase.created_at }}</p>
+
+                    <form method="POST" action="{% url 'cambiar_estado_pedido' purchase.id %}">
+                        {% csrf_token %}
+
+                        <select name="status">
+
+                            <option value="pending_payment" {% if purchase.status == "pending_payment" %}selected{% endif %}>
+                                Pendiente de pago
+                            </option>
+
+                            <option value="paid" {% if purchase.status == "paid" %}selected{% endif %}>
+                                Pagado
+                            </option>
+
+                            <option value="sent" {% if purchase.status == "sent" %}selected{% endif %}>
+                                Enviado
+                            </option>
+
+                            <option value="delivered" {% if purchase.status == "delivered" %}selected{% endif %}>
+                                Entregado
+                            </option>
+
+                            <option value="cancelled" {% if purchase.status == "cancelled" %}selected{% endif %}>
+                                Cancelado
+                            </option>
+
+                        </select>
+
+                        <button type="submit">
+                            Cambiar estado
+                        </button>
+                    </form>
+                </article>
+                {% endfor %}
+
+                {% else %}
+                <p>No hay pedidos registrados.</p>
+                {% endif %}
+            </section>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

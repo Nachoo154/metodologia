@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    button[type="submit"] {
+        margin-top: 10px;
+    }
+</style>
+
+<div id="wrapper">
+    <div id="main">
+        <div class="inner">
+
+            <header id="header">
+                <a href="{% url 'home' %}" class="logo">
+                    <strong>Body Paint / </strong> Administrar usuarios
+                </a>
+            </header>
+
+            <section>
+
+                <header class="major">
+                    <h2>Usuarios</h2>
+                </header>
+
+                {% if profiles %}
+
+                    {% for profile in profiles %}
+                    <article style="border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem;">
+
+                        <h3>
+                            {{ profile.first_name }} {{ profile.last_name }}
+                        </h3>
+
+                        <p>
+                            <strong>Email:</strong>
+                            {{ profile.email }}
+                        </p>
+
+                        <p>
+                            <strong>Rol actual:</strong>
+
+                            {% if profile.role == "vendedor" %}
+                                Vendedor
+                            {% else %}
+                                Cliente
+                            {% endif %}
+                        </p>
+
+                        <form method="POST" action="{% url 'admin_update_user_role' profile.id %}">
+                            {% csrf_token %}
+
+                            <select name="role">
+
+                                <option value="cliente" {% if profile.role == "cliente" %}selected{% endif %}>
+                                    Cliente
+                                </option>
+
+                                <option value="vendedor" {% if profile.role == "vendedor" %}selected{% endif %}>
+                                    Vendedor
+                                </option>
+
+                            </select>
+
+                            <button type="submit">
+                                Guardar rol
+                            </button>
+                        </form>
+
+                    </article>
+                    {% endfor %}
+
+                {% else %}
+
+                    <p>No hay usuarios registrados.</p>
+
+                {% endif %}
+
+            </section>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
