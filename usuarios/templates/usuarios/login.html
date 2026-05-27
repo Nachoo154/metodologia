@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div id="wrapper">
+    <div id="main">
+        <div class="inner">
+            <section>
+                <header class="main">
+                    <h1 style="text-align:center;">Iniciar sesi&oacute;n</h1>
+                </header>
+
+                {% if error %}
+                    <div class="box" style="border-left:4px solid #d9534f; margin-bottom:16px;">
+                        <strong>{{ error }}</strong>
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="row gtr-uniform">
+                        <div class="col-12">
+                            <input type="email" name="email" placeholder="Email" required>
+                        </div>
+                        <div class="col-12">
+                            <input type="password" name="password" placeholder="Contrase&ntilde;a" required>
+                        </div>
+                        <div class="col-12">
+                            <ul class="actions special">
+                                <li><input type="submit" value="Iniciar sesi&oacute;n" class="primary"></li>
+                            </ul>
+                        </div>
+                    </div>
+                </form>
+
+                <p style="text-align:center;">&iquest;No tienes cuenta? <a href="{% url 'register' %}">Reg&iacute;strate aqu&iacute;</a></p>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

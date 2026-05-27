@@ -1,0 +1,256 @@
+{% load static %}
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel Admin - Metodolog&iacute;a</title>
+    <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+  </head>
+
+  <body>
+    <header>
+      <h1>Panel de Administraci&oacute;n</h1>
+      <div class="header-actions">
+        <a href="{% url 'admin_users' %}" class="btn-header-secondary">
+          👥 Gestionar usuarios
+        </a>
+        <a href="/admin/logout/">Cerrar sesi&oacute;n</a>
+      </div>
+    </header>
+
+    <div class="container">
+      {% if success %}
+      <div class="success">{{ success }}</div>
+      {% endif %} {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <section class="section">
+        <div class="section-header">
+          <h2>Productos</h2>
+
+          <a href="{% url 'admin_product_create' %}" class="btn-new">
+            + Nuevo Producto
+          </a>
+        </div>
+
+        {% if products %}
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Descripci&oacute;n</th>
+              <th>Precio</th>
+              <th>Stock</th>
+              <th>Imagen</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr>
+              <td>{{ product.id }}</td>
+              <td>{{ product.name }}</td>
+              <td>{{ product.description|truncatewords:10 }}</td>
+              <td>${{ product.price }}</td>
+              <td>{{ product.stock }}</td>
+              <td>
+                {% if product.image %}
+                <a href="{{ product.image }}" target="_blank">
+                  <img
+                    src="{{ product.image }}"
+                    alt="{{ product.name }}"
+                    class="product-thumb"
+                  />
+                </a>
+                {% else %} - {% endif %}
+              </td>
+              <td>
+                <div class="actions">
+                  <a
+                    href="{% url 'admin_product_edit' product.id %}"
+                    class="btn btn-edit"
+                  >
+                    Editar
+                  </a>
+
+                  <a
+                    href="{% url 'admin_product_delete' product.id %}"
+                    class="btn btn-delete"
+                    onclick="return confirm('&iquest;Est&aacute;s seguro?');"
+                  >
+                    Eliminar
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty">
+          <p>No hay productos registrados</p>
+
+          <p>
+            <a href="{% url 'admin_product_create' %}" class="btn-new">
+              Crear el primer producto
+            </a>
+          </p>
+        </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <script>
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function formatDate(raw) {
+        var value = String(raw || "");
+        var datePart = value.slice(0, 10);
+        var timePart = value.slice(11, 19);
+        return (
+          escapeHtml(datePart) +
+          "<br><span class='subtle'>" +
+          escapeHtml(timePart) +
+          "</span>"
+        );
+      }
+
+      function formatPurchaseRow(purchase) {
+        var profile = purchase.profiles || null;
+        var product = purchase.products || null;
+        var customer = profile
+          ? escapeHtml(
+              (
+                (profile.first_name || "") +
+                " " +
+                (profile.last_name || "")
+              ).trim(),
+            ) +
+            "<br><span class='subtle'>" +
+            escapeHtml(profile.email) +
+            "</span>"
+          : "<span class='mono'>Usuario #" +
+            escapeHtml(purchase.user_id) +
+            "</span>";
+        var productLabel = product
+          ? escapeHtml(product.name) +
+            "<br><span class='mono'>#" +
+            escapeHtml(purchase.product_id) +
+            "</span>"
+          : "<span class='mono'>Producto #" +
+            escapeHtml(purchase.product_id) +
+            "</span>";
+        var unitPrice =
+          product && product.price != null
+            ? "$" + escapeHtml(product.price)
+            : "&mdash;";
+        var total =
+          purchase.total_amount != null
+            ? "$" + escapeHtml(purchase.total_amount)
+            : "&mdash;";
+        var statusRaw = String(purchase.status || "").toLowerCase();
+        var statusClass = statusRaw.replace(/[^a-z0-9-]/g, "");
+
+        return (
+          "<tr>" +
+          "<td><span class='mono'>#" +
+          escapeHtml(purchase.id) +
+          "</span></td>" +
+          "<td>" +
+          formatDate(purchase.created_at) +
+          "</td>" +
+          "<td>" +
+          customer +
+          "</td>" +
+          "<td>" +
+          productLabel +
+          "</td>" +
+          "<td class='num'>" +
+          escapeHtml(purchase.amount) +
+          "</td>" +
+          "<td class='num'>" +
+          unitPrice +
+          "</td>" +
+          "<td class='num price-strong'>" +
+          total +
+          "</td>" +
+          "<td><span class='status-pill status-" +
+          escapeHtml(statusClass) +
+          "'>" +
+          escapeHtml(purchase.status) +
+          "</span></td>" +
+          "</tr>"
+        );
+      }
+
+      function renderPurchasesError(message) {
+        var tbody = document.getElementById("purchases-body");
+        if (!tbody) return;
+        tbody.innerHTML =
+          "<tr><td colspan='8' class='empty error-text'>Error: " +
+          escapeHtml(message) +
+          "</td></tr>";
+      }
+
+      async function refreshPurchases() {
+        try {
+          var response = await fetch("/admin-panel/compras/data/", {
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+          });
+          var data = null;
+          try {
+            data = await response.json();
+          } catch (_) {
+            /* non-JSON response */
+          }
+
+          if (!response.ok) {
+            renderPurchasesError(
+              (data && data.error) || "HTTP " + response.status,
+            );
+            return;
+          }
+          if (!data || data.status !== "ok") {
+            renderPurchasesError(
+              (data && data.error) || "Respuesta inesperada",
+            );
+            return;
+          }
+
+          var tbody = document.getElementById("purchases-body");
+          if (!tbody) return;
+
+          var purchases = data.purchases || [];
+          console.info("[purchases poll] " + purchases.length + " filas");
+          if (!purchases.length) {
+            tbody.innerHTML =
+              "<tr><td colspan='8' class='empty'>Aún no hay compras registradas (count=" +
+              (data.count != null ? data.count : 0) +
+              ")</td></tr>";
+            return;
+          }
+
+          tbody.innerHTML = purchases.map(formatPurchaseRow).join("");
+        } catch (error) {
+          console.error("No se pudo actualizar compras:", error);
+          renderPurchasesError(
+            error && error.message ? error.message : String(error),
+          );
+        }
+      }
+
+      refreshPurchases();
+      setInterval(refreshPurchases, 5000);
+    </script>
+  </body>
+</html>
