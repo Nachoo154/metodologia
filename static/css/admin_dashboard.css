@@ -38,6 +38,37 @@ header a:hover {
     background: #ff5252;
 }
 
+.header-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.btn-header-secondary {
+    background: #111827;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-header-secondary:hover {
+    background: #1f2937;
+}
+
+.product-thumb {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+}
+
+.error-text {
+    color: #b91c1c;
+}
+
 .container {
     max-width: 1280px;
     margin: 0 auto;

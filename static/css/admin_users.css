@@ -1,0 +1,52 @@
+.users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.user-card {
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.user-card h3 {
+    margin: 0 0 0.5rem 0;
+    color: #111827;
+}
+
+.user-card p {
+    margin: 0.25rem 0;
+    color: #374151;
+}
+
+.role-form {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.role-form select {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.role-form button {
+    background: #111827;
+    color: white;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.role-form button:hover {
+    background: #1f2937;
+}

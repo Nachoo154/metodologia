@@ -49,6 +49,13 @@
 
                 {% if request.session.user_email %}
 
+                {% if request.session.user_role == 'vendedor' %}
+                <a href="{% url 'vendedor_dashboard' %}" class="{% if '/vendedor' in request.path %}is-active{% endif %}">
+                    <i class="fas fa-store-alt"></i>
+                    Panel vendedor
+                </a>
+                {% endif %}
+
                 <a href="{% url 'cart' %}" class="topbar-cart {% if '/carrito' in request.path %}is-active{% endif %}">
                     <i class="fas fa-shopping-cart"></i>
                     Carrito

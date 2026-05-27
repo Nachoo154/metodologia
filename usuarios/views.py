@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from supabase_auth.errors import AuthApiError
 
+from pedidos.services import get_profile_by_email
 from usuarios.services import create_confirmed_user, create_profile, login_user
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,16 @@ def supabase_error_message(exc):
         return "Email o contraseña incorrectos."
 
     return str(exc)
+
+
+def store_session_role(request, email):
+    try:
+        profile_res = get_profile_by_email(email)
+        profile = profile_res.data[0] if profile_res.data else None
+        request.session["user_role"] = (profile or {}).get("role") or "cliente"
+    except Exception as e:
+        logger.error(f"Profile role lookup error: {str(e)}")
+        request.session["user_role"] = "cliente"
 
 
 def require_user(view_func):
@@ -145,6 +156,7 @@ def register(request):
         if login_res.user and login_res.session:
             request.session["user_email"] = login_res.user.email
             request.session["user_token"] = login_res.session.access_token
+            store_session_role(request, login_res.user.email)
 
         return redirect("/")
 
@@ -185,6 +197,7 @@ def login(request):
         if res.user and res.session:
             request.session["user_email"] = res.user.email
             request.session["user_token"] = res.session.access_token
+            store_session_role(request, res.user.email)
             return redirect("/")
 
         return render(request, "usuarios/login.html", {
