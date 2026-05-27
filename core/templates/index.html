@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/index.css' %}">
+
+<div id="wrapper">
+
+    <div id="main">
+
+        <div class="inner">
+
+            <header id="header">
+                <a href="#" class="logo">
+                    <strong>Body Paint / </strong>
+                    Inicio
+                </a>
+            </header>
+
+            <a href="{% url 'cart' %}" class="floating-cart-button" aria-label="Ver carrito">
+                <i class="fas fa-shopping-cart"></i>
+            </a>
+
+            <section id="banner">
+
+                <div class="content">
+                    <header>
+                        <h1>
+                            Expertos en el
+                            <br>
+                            arte de la piel
+                        </h1>
+
+                        <p>
+                            Tu tienda online de insumos premium para Body Painting.
+                        </p>
+                    </header>
+                </div>
+
+                <span class="image object">
+                    <img src="{% static 'images/inicio.png' %}" alt="Body Paint" />
+                </span>
+
+            </section>
+
+            <section id="productos">
+
+                <header class="major">
+                    <h2>Cat&aacute;logo de Art&iacute;culos</h2>
+                </header>
+
+                <div class="posts">
+
+                    {% for producto in products %}
+
+                    <article>
+
+                        <a href="#" class="image">
+
+                            {% if producto.image %}
+                            <img src="{{ producto.image }}" alt="{{ producto.name }}" />
+
+                            {% else %}
+                            <img src="{% static 'images/default.jpg' %}" alt="Sin imagen" />
+                            {% endif %}
+
+                        </a>
+
+                        <h3>{{ producto.name }}</h3>
+
+                        <p>
+                            {{ producto.description|truncatechars:120 }}
+                        </p>
+
+                        <div class="product-meta">
+
+                            <span class="product-price">
+                                ${{ producto.price }}
+                            </span>
+
+                            {% if producto.stock > 5 %}
+
+                            <span class="product-stock in-stock">
+                                <i class="fas fa-check-circle"></i>
+                                En stock
+                            </span>
+
+                            {% elif producto.stock > 0 %}
+
+                            <span class="product-stock low">
+                                <i class="fas fa-exclamation-circle"></i>
+                                &Uacute;ltimas {{ producto.stock }}
+                            </span>
+
+                            {% else %}
+
+                            <span class="product-stock out">
+                                <i class="fas fa-times-circle"></i>
+                                Sin stock
+                            </span>
+
+                            {% endif %}
+
+                        </div>
+
+                        <ul class="actions">
+
+                            <li>
+
+                                <form method="POST" action="{% url 'add_to_cart' producto.id %}">
+
+                                    {% csrf_token %}
+
+                                    <div class="quantity-stepper" data-max="{{ producto.stock|default:1 }}">
+
+                                        <button type="button" data-action="dec" aria-label="Disminuir">
+                                            &minus;
+                                        </button>
+
+                                        <input
+                                            type="number"
+                                            name="quantity"
+                                            value="1"
+                                            min="1"
+                                            max="{{ producto.stock|default:1 }}"
+                                        />
+
+                                        <button type="button" data-action="inc" aria-label="Aumentar">
+                                            +
+                                        </button>
+
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        class="add-to-cart-btn"
+                                        {% if not producto.stock %}disabled{% endif %}
+                                    >
+                                        <i class="fas fa-cart-plus"></i>
+                                        Agregar
+                                    </button>
+
+                                </form>
+
+                            </li>
+
+                        </ul>
+
+                    </article>
+
+                    {% empty %}
+
+                    <p>No hay productos disponibles.</p>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        document.querySelectorAll('.quantity-stepper').forEach(function (stepper) {
+
+            var input = stepper.querySelector('input[type="number"]');
+            var dec = stepper.querySelector('[data-action="dec"]');
+            var inc = stepper.querySelector('[data-action="inc"]');
+
+            if (!input) return;
+
+            var min = parseInt(input.min || '1', 10);
+            var max = parseInt(input.max || '99', 10);
+
+            function refresh() {
+
+                var v = parseInt(input.value || min, 10);
+
+                if (isNaN(v)) v = min;
+                if (v < min) v = min;
+                if (v > max) v = max;
+
+                input.value = v;
+
+                if (dec) dec.disabled = v <= min;
+                if (inc) inc.disabled = v >= max;
+            }
+
+            if (dec) {
+
+                dec.addEventListener('click', function () {
+
+                    input.value = Math.max(
+                        min,
+                        (parseInt(input.value, 10) || min) - 1
+                    );
+
+                    refresh();
+                });
+            }
+
+            if (inc) {
+
+                inc.addEventListener('click', function () {
+
+                    input.value = Math.min(
+                        max,
+                        (parseInt(input.value, 10) || min) + 1
+                    );
+
+                    refresh();
+                });
+            }
+
+            input.addEventListener('input', refresh);
+
+            refresh();
+
+        });
+
+    });
+
+</script>
+
+{% endblock %}

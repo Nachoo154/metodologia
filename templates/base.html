@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>Body Paint</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+</head>
+
+<body class="is-preload">
+
+    <header class="topbar">
+        <nav class="topbar-nav">
+
+            {% if request.path != '/' %}
+            <a href="{% url 'home' %}" class="topbar-brand">
+                <span class="brand-mark">
+                    <i class="fas fa-paint-brush"></i>
+                </span>
+                <span class="brand-text">Body Paint</span>
+            </a>
+            {% else %}
+            <span class="topbar-brand">
+                <span class="brand-mark">
+                    <i class="fas fa-paint-brush"></i>
+                </span>
+                <span class="brand-text">Body Paint</span>
+            </span>
+            {% endif %}
+
+            <div class="topbar-links">
+
+                {% if request.session.user_email %}
+                <span class="topbar-user" title="{{ request.session.user_email }}">
+                    <i class="fas fa-user-circle"></i>
+                    {{ request.session.user_email }}
+                </span>
+                {% endif %}
+
+                <a href="{% url 'home' %}#productos" class="{% if request.path == '/' %}is-active{% endif %}">
+                    <i class="fas fa-store"></i>
+                    Productos
+                </a>
+
+                {% if request.session.user_email %}
+
+                <a href="{% url 'cart' %}" class="topbar-cart {% if '/carrito' in request.path %}is-active{% endif %}">
+                    <i class="fas fa-shopping-cart"></i>
+                    Carrito
+
+                    {% if cart_count|default:0 %}
+                    <span class="cart-badge">
+                        {{ cart_count }}
+                    </span>
+                    {% endif %}
+                </a>
+
+                <a href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar sesi&oacute;n
+                </a>
+
+                {% else %}
+
+                <a href="{% url 'login' %}">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Iniciar sesi&oacute;n
+                </a>
+
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    {% block content %}
+    {% endblock %}
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/browser.min.js' %}"></script>
+    <script src="{% static 'js/breakpoints.min.js' %}"></script>
+    <script src="{% static 'js/util.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+
+</body>
+
+</html>
