@@ -1,0 +1,131 @@
+{% load static %}
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gesti&oacute;n de stock - Panel Admin</title>
+    <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/admin_stock.css' %}" />
+  </head>
+
+  <body>
+    <header>
+      <h1>Panel de Administraci&oacute;n &middot; Gesti&oacute;n de stock</h1>
+      <div class="header-actions">
+        <a href="{% url 'admin_dashboard' %}" class="btn-header-secondary">
+          &larr; Volver al panel
+        </a>
+        <a href="{% url 'admin_logout' %}">Cerrar sesi&oacute;n</a>
+      </div>
+    </header>
+
+    <div class="container">
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <section class="section">
+        <div class="section-header">
+          <h2>Productos con stock m&iacute;nimo (&le; {{ stock_minimo }})</h2>
+          <a href="{% url 'admin_stock_report' %}" class="btn-new">
+            ⬇ Descargar reporte
+          </a>
+        </div>
+
+        {% if products %}
+        <table>
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th>Nombre</th>
+              <th>Stock actual</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+            <tr>
+              <td>
+                {% if product.image %}
+                <img
+                  src="{{ product.image }}"
+                  alt="{{ product.name }}"
+                  class="product-thumb"
+                />
+                {% else %} - {% endif %}
+              </td>
+              <td>{{ product.name }}</td>
+              <td>
+                <span
+                  class="stock-pill
+                    {% if product.stock <= 1 %}stock-low
+                    {% elif product.stock <= 3 %}stock-mid
+                    {% else %}stock-high{% endif %}"
+                >
+                  {{ product.stock }}
+                </span>
+              </td>
+              <td>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="btn btn-edit"
+                    onclick="toggleReponer({{ product.id }})"
+                  >
+                    Reponer
+                  </button>
+                </div>
+
+                <form
+                  method="POST"
+                  action="{% url 'admin_stock_update' product.id %}"
+                  class="reponer-form"
+                  id="reponer-form-{{ product.id }}"
+                >
+                  {% csrf_token %}
+                  <input
+                    type="number"
+                    name="stock"
+                    min="0"
+                    value="{{ product.stock }}"
+                    required
+                  />
+                  <button type="submit" class="btn btn-edit">Guardar</button>
+                  <button
+                    type="button"
+                    class="btn btn-delete"
+                    onclick="toggleReponer({{ product.id }})"
+                  >
+                    Cancelar
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty">
+          <p>No hay productos con stock por debajo del m&iacute;nimo.</p>
+        </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <script>
+      function toggleReponer(id) {
+        var form = document.getElementById("reponer-form-" + id);
+        if (!form) return;
+        form.classList.toggle("open");
+        if (form.classList.contains("open")) {
+          var input = form.querySelector("input[name='stock']");
+          if (input) {
+            input.focus();
+            input.select();
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

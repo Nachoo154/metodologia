@@ -2,7 +2,9 @@ import logging
 import os
 from usuarios.services import get_all_profiles, update_profile_role
 
-from django.http import JsonResponse
+from datetime import datetime
+
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
@@ -20,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+STOCK_MINIMO = 5
 
 
 def require_admin(view_func):
@@ -91,9 +94,14 @@ def admin_dashboard(request):
         logger.exception("Admin dashboard purchases error")
         errors.append(f"Compras: {e}")
 
+    low_stock_count = sum(
+        1 for p in products if (p.get("stock") or 0) <= STOCK_MINIMO
+    )
+
     context = {
         "products": products,
         "purchases": purchases,
+        "low_stock_count": low_stock_count,
     }
 
     if errors:
@@ -197,12 +205,107 @@ def admin_purchases_data(request):
         
         
 @require_admin
+def admin_stock(request):
+    products = []
+    error = None
+
+    try:
+        res = get_all_products()
+        all_products = res.data if res.data else []
+        products = [p for p in all_products if (p.get("stock") or 0) <= STOCK_MINIMO]
+        products.sort(key=lambda p: p.get("stock") or 0)
+    except Exception as e:
+        logger.error(f"Admin stock fetch error: {str(e)}")
+        error = str(e)
+
+    return render(request, "admin_panel/admin_stock.html", {
+        "products": products,
+        "stock_minimo": STOCK_MINIMO,
+        "low_stock_count": len(products),
+        "error": error,
+    })
+
+
+@require_admin
+def admin_stock_report(request):
+    try:
+        res = get_all_products()
+        products = res.data if res.data else []
+    except Exception as e:
+        logger.error(f"Stock report error: {str(e)}")
+        products = []
+
+    products.sort(key=lambda p: p.get("stock") or 0)
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    lines = [
+        "REPORTE DE STOCK DE PRODUCTOS",
+        f"Generado: {timestamp}",
+        f"Stock minimo configurado: {STOCK_MINIMO}",
+        "-" * 60,
+        f"{'ID':<6}{'NOMBRE':<35}{'STOCK':>8}  ESTADO",
+        "-" * 60,
+    ]
+
+    for p in products:
+        stock = p.get("stock") or 0
+        estado = "BAJO" if stock <= STOCK_MINIMO else "OK"
+        nombre = (p.get("name") or "")[:34]
+        lines.append(f"{str(p.get('id', '')):<6}{nombre:<35}{stock:>8}  {estado}")
+
+    lines.append("-" * 60)
+    lines.append(f"Total de productos: {len(products)}")
+    lines.append(
+        f"Productos con stock minimo: "
+        f"{sum(1 for p in products if (p.get('stock') or 0) <= STOCK_MINIMO)}"
+    )
+
+    content = "\n".join(lines) + "\n"
+    filename = f"reporte_stock_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+
+    response = HttpResponse(content, content_type="text/plain; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@require_admin
+def admin_stock_update(request, id):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    try:
+        new_stock = int(request.POST.get("stock", ""))
+        if new_stock < 0:
+            raise ValueError("El stock no puede ser negativo")
+    except (TypeError, ValueError):
+        return redirect("admin_stock")
+
+    try:
+        update_product(id, {"stock": new_stock})
+    except Exception as e:
+        logger.error(f"Stock update error: {str(e)}")
+
+    return redirect("admin_stock")
+
+
+@require_admin
 def admin_users(request):
     profiles_res = get_all_profiles()
     profiles = profiles_res.data if profiles_res.data else []
 
+    low_stock_count = 0
+    try:
+        res = get_all_products()
+        all_products = res.data if res.data else []
+        low_stock_count = sum(
+            1 for p in all_products if (p.get("stock") or 0) <= STOCK_MINIMO
+        )
+    except Exception as e:
+        logger.error(f"Admin users low_stock_count error: {str(e)}")
+
     return render(request, "admin_panel/admin_users.html", {
         "profiles": profiles,
+        "low_stock_count": low_stock_count,
     })
 
 

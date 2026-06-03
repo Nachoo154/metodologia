@@ -1,0 +1,59 @@
+.stock-pill {
+    display: inline-block;
+    min-width: 44px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.stock-pill.stock-low {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.stock-pill.stock-mid {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.stock-pill.stock-high {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.reponer-form {
+    display: none;
+    margin-top: 10px;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.reponer-form.open {
+    display: flex;
+}
+
+.reponer-form input[type="number"] {
+    width: 90px;
+    padding: 7px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+.reponer-form input[type="number"]:focus {
+    outline: none;
+    border-color: #1a1a2e;
+    box-shadow: 0 0 0 2px rgba(26, 26, 46, 0.15);
+}
+
+.reponer-form .btn {
+    cursor: pointer;
+}

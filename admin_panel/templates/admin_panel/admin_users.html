@@ -16,6 +16,12 @@
             <a href="{% url 'admin_dashboard' %}" class="btn-header-secondary">
                 &larr; Volver al panel
             </a>
+            <a href="{% url 'admin_stock' %}" class="btn-header-secondary stock-link">
+                📦 Gesti&oacute;n de stock
+                {% if low_stock_count %}
+                <span class="stock-badge">{{ low_stock_count }}</span>
+                {% endif %}
+            </a>
             <a href="{% url 'admin_logout' %}">Cerrar sesi&oacute;n</a>
         </div>
     </header>
