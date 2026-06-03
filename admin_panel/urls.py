@@ -14,4 +14,8 @@ urlpatterns = [
     path("compras/data/", views.admin_purchases_data, name="admin_purchases_data"),
     path("usuarios/", views.admin_users, name="admin_users"),
     path("usuarios/<int:id>/rol/", views.admin_update_user_role, name="admin_update_user_role"),
+
+    path("stock/", views.admin_stock, name="admin_stock"),
+    path("stock/reporte/", views.admin_stock_report, name="admin_stock_report"),
+    path("stock/<int:id>/actualizar/", views.admin_stock_update, name="admin_stock_update"),
 ]

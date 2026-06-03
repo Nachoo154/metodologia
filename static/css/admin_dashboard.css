@@ -59,6 +59,31 @@ header a:hover {
     background: #1f2937;
 }
 
+header a.stock-link {
+    position: relative;
+    overflow: visible;
+}
+
+header a.stock-link .stock-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+    border: 2px solid #16213e;
+    box-sizing: border-box;
+    display: inline-block;
+}
+
 .product-thumb {
     width: 80px;
     height: 60px;
