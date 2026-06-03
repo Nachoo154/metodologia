@@ -1,0 +1,129 @@
+{% load static %}
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Importaci&oacute;n masiva - Panel Admin</title>
+    <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/admin_product_import.css' %}" />
+  </head>
+
+  <body>
+    <header>
+      <h1>Importaci&oacute;n masiva de productos</h1>
+      <div class="header-actions">
+        <a href="{% url 'admin_product_create' %}" class="btn-header-secondary">
+          &larr; Volver al formulario
+        </a>
+        <a href="{% url 'admin_logout' %}">Cerrar sesi&oacute;n</a>
+      </div>
+    </header>
+
+    <div class="container">
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+
+      {% if success %}
+      <div class="success">{{ success }}</div>
+      {% endif %}
+
+      {% if import_errors %}
+      <div class="error">
+        <strong>Errores durante la importaci&oacute;n:</strong>
+        <ul>
+          {% for err in import_errors %}
+          <li>{{ err }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if not products %}
+      <section class="section">
+        <div class="section-header">
+          <h2>Subir archivo JSON</h2>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="upload-form">
+          {% csrf_token %}
+          <p class="hint">
+            El archivo debe contener una lista de objetos JSON. Cada producto
+            debe incluir los campos:
+            <code>name</code>, <code>description</code>, <code>price</code>,
+            <code>stock</code>, <code>image</code>.
+          </p>
+
+          <pre class="json-example">[
+  {
+    "name": "Producto ejemplo",
+    "description": "Descripción del producto",
+    "price": 1500.50,
+    "stock": 20,
+    "image": "https://ejemplo.com/imagen.jpg"
+  }
+]</pre>
+
+          <input
+            type="file"
+            name="json_file"
+            accept="application/json,.json"
+            required
+          />
+
+          <button type="submit" class="btn-new">Validar archivo</button>
+        </form>
+      </section>
+      {% else %}
+      <section class="section">
+        <div class="section-header">
+          <h2>Vista previa ({{ products|length }} productos)</h2>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Descripci&oacute;n</th>
+              <th>Precio</th>
+              <th>Stock</th>
+              <th>Imagen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in products %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ p.name }}</td>
+              <td>{{ p.description|truncatewords:15 }}</td>
+              <td>${{ p.price }}</td>
+              <td>{{ p.stock }}</td>
+              <td>
+                <a href="{{ p.image }}" target="_blank">
+                  <img src="{{ p.image }}" alt="{{ p.name }}" class="product-thumb" />
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="confirm-actions">
+          <form method="POST" action="{% url 'admin_product_import_confirm' %}">
+            {% csrf_token %}
+            <input type="hidden" name="products_json" value="{{ products_json }}" />
+            <button type="submit" class="btn-new">
+              Guardar {{ products|length }} productos en la base de datos
+            </button>
+          </form>
+          <a href="{% url 'admin_product_import' %}" class="btn btn-delete">
+            Cancelar
+          </a>
+        </div>
+      </section>
+      {% endif %}
+    </div>
+  </body>
+</html>

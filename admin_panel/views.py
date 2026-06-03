@@ -2,6 +2,7 @@ import logging
 import os
 from usuarios.services import get_all_profiles, update_profile_role
 
+import json
 from datetime import datetime
 
 from django.http import HttpResponse, JsonResponse
@@ -131,6 +132,134 @@ def admin_product_create(request):
             })
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+REQUIRED_IMPORT_FIELDS = ("name", "description", "price", "stock", "image")
+
+
+def _validate_imported_products(raw):
+    if not isinstance(raw, list):
+        raise ValueError("El JSON debe ser una lista de productos")
+
+    if not raw:
+        raise ValueError("La lista de productos está vacía")
+
+    validated = []
+    for index, item in enumerate(raw, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(f"Producto #{index}: debe ser un objeto JSON")
+
+        missing = [f for f in REQUIRED_IMPORT_FIELDS if f not in item]
+        if missing:
+            raise ValueError(
+                f"Producto #{index}: faltan campos requeridos: {', '.join(missing)}"
+            )
+
+        name = str(item["name"]).strip()
+        description = str(item["description"]).strip()
+        image = str(item["image"]).strip()
+
+        if not name:
+            raise ValueError(f"Producto #{index}: el nombre no puede estar vacío")
+        if not description:
+            raise ValueError(f"Producto #{index}: la descripción no puede estar vacía")
+        if not image:
+            raise ValueError(f"Producto #{index}: la imagen no puede estar vacía")
+
+        try:
+            price = float(item["price"])
+        except (TypeError, ValueError):
+            raise ValueError(f"Producto #{index}: el precio debe ser numérico")
+        try:
+            stock = int(item["stock"])
+        except (TypeError, ValueError):
+            raise ValueError(f"Producto #{index}: el stock debe ser un entero")
+
+        if price < 0:
+            raise ValueError(f"Producto #{index}: el precio no puede ser negativo")
+        if stock < 0:
+            raise ValueError(f"Producto #{index}: el stock no puede ser negativo")
+
+        validated.append({
+            "name": name,
+            "description": description,
+            "price": price,
+            "stock": stock,
+            "image": image,
+        })
+
+    return validated
+
+
+@require_admin
+def admin_product_import(request):
+    if request.method == "GET":
+        return render(request, "admin_panel/admin_product_import.html", {})
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+
+    uploaded = request.FILES.get("json_file")
+    if not uploaded:
+        return render(request, "admin_panel/admin_product_import.html", {
+            "error": "Debes seleccionar un archivo .json",
+        })
+
+    try:
+        raw_text = uploaded.read().decode("utf-8")
+    except UnicodeDecodeError:
+        return render(request, "admin_panel/admin_product_import.html", {
+            "error": "El archivo no tiene codificación UTF-8 válida",
+        })
+
+    try:
+        parsed = json.loads(raw_text)
+    except json.JSONDecodeError as e:
+        return render(request, "admin_panel/admin_product_import.html", {
+            "error": f"JSON inválido: {e.msg} (línea {e.lineno})",
+        })
+
+    try:
+        products = _validate_imported_products(parsed)
+    except ValueError as e:
+        return render(request, "admin_panel/admin_product_import.html", {
+            "error": str(e),
+        })
+
+    return render(request, "admin_panel/admin_product_import.html", {
+        "products": products,
+        "products_json": json.dumps(products),
+    })
+
+
+@require_admin
+def admin_product_import_confirm(request):
+    if request.method != "POST":
+        return redirect("admin_product_import")
+
+    payload = request.POST.get("products_json", "")
+    try:
+        parsed = json.loads(payload)
+        products = _validate_imported_products(parsed)
+    except (json.JSONDecodeError, ValueError) as e:
+        return render(request, "admin_panel/admin_product_import.html", {
+            "error": f"No se pudo confirmar la importación: {e}",
+        })
+
+    created = 0
+    errors = []
+    for index, product in enumerate(products, start=1):
+        try:
+            create_product(product)
+            created += 1
+        except Exception as e:
+            logger.error(f"Bulk import error on product #{index}: {str(e)}")
+            errors.append(f"#{index} ({product.get('name')}): {e}")
+
+    return render(request, "admin_panel/admin_product_import.html", {
+        "success": f"{created} de {len(products)} productos importados correctamente.",
+        "import_errors": errors,
+    })
 
 
 @require_admin
