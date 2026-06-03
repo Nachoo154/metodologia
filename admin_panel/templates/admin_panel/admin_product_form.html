@@ -10,7 +10,12 @@
 <body>
     <header>
         <h1>{{ title }}</h1>
-        <a href="/admin/">← Volver</a>
+        <div>
+            {% if not product %}
+            <a href="{% url 'admin_product_import' %}">📥 Importación masiva</a>
+            {% endif %}
+            <a href="/admin-panel/">← Volver</a>
+        </div>
     </header>
 
     <div class="container">
@@ -49,7 +54,7 @@
 
             <div class="button-group">
                 <button type="submit">{{ button_text }}</button>
-                <a href="/admin/" class="btn btn-cancel">Cancelar</a>
+                <a href="/admin-panel/" class="btn btn-cancel">Cancelar</a>
             </div>
         </form>
     </div>
