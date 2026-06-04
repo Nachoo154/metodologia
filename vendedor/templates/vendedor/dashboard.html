@@ -43,6 +43,34 @@
         white-space: nowrap;
     }
 
+    .vendedor-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .report-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        background: #f56a6a;
+        color: #fff;
+        padding: 0.55rem 0.95rem;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: background 0.15s, transform 0.15s;
+        white-space: nowrap;
+    }
+
+    .report-button:hover {
+        background: #e85959;
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
     .filter-bar {
         display: flex;
         flex-wrap: wrap;
@@ -229,9 +257,14 @@
             <h2>Pedidos</h2>
             <p class="hero-sub">Gestioná los pedidos recibidos y actualizá su estado.</p>
         </div>
-        <span class="vendedor-count">
-            {{ purchases|length }} pedido{{ purchases|length|pluralize:"s" }}
-        </span>
+        <div class="vendedor-actions">
+            <a href="{% url 'vendedor_reporte_mas_vendidos' %}" class="report-button">
+                <i class="fas fa-download"></i> Reporte mas vendidos
+            </a>
+            <span class="vendedor-count">
+                {{ purchases|length }} pedido{{ purchases|length|pluralize:"s" }}
+            </span>
+        </div>
     </div>
 
     <nav class="filter-bar" aria-label="Filtrar pedidos por estado">
