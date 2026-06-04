@@ -6,7 +6,9 @@ import requests
 
 def main():
     session = requests.Session()
-    resp = session.get("http://127.0.0.1:8000/register/")
+    register_url = "http://127.0.0.1:8000/usuarios/registro/"
+
+    resp = session.get(register_url)
     print("GET status", resp.status_code)
     if resp.status_code != 200:
         print(resp.text[:1000])
@@ -30,8 +32,8 @@ def main():
         "password": "Test1234!",
         "tel": "1234567890",
     }
-    headers = {"Referer": "http://127.0.0.1:8000/register/"}
-    post = session.post("http://127.0.0.1:8000/register/", data=payload, headers=headers)
+    headers = {"Referer": register_url}
+    post = session.post(register_url, data=payload, headers=headers)
     print("POST status", post.status_code)
     print("email used:", email)
 

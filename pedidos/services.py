@@ -1,6 +1,9 @@
 from core.supabase_client import supabase
 
 
+SOLD_PURCHASE_STATUSES = ("pending_payment", "paid", "sent", "delivered")
+
+
 def get_profile_by_email(email):
     return (
         supabase
@@ -37,6 +40,47 @@ def get_recent_purchases(limit=100):
         .limit(limit)
         .execute()
     )
+
+
+def get_top_selling_products(limit=10):
+    res = (
+        supabase
+        .table("purchases")
+        .select(
+            "id,amount,status,product_id,"
+            "products!purchases_product_id_fkey(name)"
+        )
+        .in_("status", list(SOLD_PURCHASE_STATUSES))
+        .limit(1000)
+        .execute()
+    )
+
+    purchases = res.data if res.data else []
+    ranking = {}
+
+    for purchase in purchases:
+        product_id = purchase.get("product_id")
+        amount = int(purchase.get("amount") or 0)
+        product = purchase.get("products") or {}
+
+        if not product_id or amount <= 0:
+            continue
+
+        if product_id not in ranking:
+            ranking[product_id] = {
+                "product_id": product_id,
+                "name": product.get("name") or "Producto eliminado",
+                "quantity": 0,
+            }
+
+        ranking[product_id]["quantity"] += amount
+
+    return sorted(
+        ranking.values(),
+        key=lambda item: item["quantity"],
+        reverse=True,
+    )[:limit]
+
 
 def update_purchase_status(purchase_id, status):
     return (
