@@ -1,7 +1,7 @@
 from core.supabase_client import supabase
 
 
-SOLD_PURCHASE_STATUSES = ("pending_payment", "paid", "sent", "delivered")
+SOLD_PURCHASE_STATUSES = ("paid", "sent", "delivered")
 
 
 def get_profile_by_email(email):
