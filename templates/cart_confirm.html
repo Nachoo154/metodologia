@@ -338,7 +338,12 @@
         border-radius: 8px;
         font-size: 0.95rem;
         font-family: inherit;
+        text-transform: uppercase;
         transition: border-color 0.2s;
+    }
+
+    .coupon-input::placeholder {
+        text-transform: none;
     }
 
     .coupon-input:focus {
@@ -350,7 +355,8 @@
     .coupon-btn {
         padding: 0.75rem 1rem;
         background: linear-gradient(135deg, #f56a6a 0%, #ef4444 100%);
-        color: #ffffff;
+        color: #ffffff !important;
+        box-shadow: none !important;
         border: 0;
         border-radius: 8px;
         font-weight: 700;
@@ -358,7 +364,10 @@
         text-transform: uppercase;
         letter-spacing: 0.06em;
         cursor: pointer;
-        transition: filter 0.2s;
+        opacity: 1;
+        line-height: 1;
+        height: auto;
+        transition: filter 0.2s, opacity 0.2s, transform 0.2s;
         white-space: nowrap;
         display: flex;
         align-items: center;
@@ -366,12 +375,17 @@
     }
 
     .coupon-btn:hover {
+        box-shadow: none !important;
+    }
+
+    .coupon-btn:hover:not(:disabled) {
         filter: brightness(1.05);
     }
 
     .coupon-btn:disabled {
-        opacity: 0.7;
+        opacity: 0.5;
         cursor: not-allowed;
+        filter: grayscale(0.3);
     }
 
     .coupon-btn.loading {
@@ -560,7 +574,7 @@
                                 placeholder="Ingresa tu código de cupón..."
                                 autocomplete="off"
                             />
-                            <button type="button" id="apply-coupon-btn" class="coupon-btn">Aplicar</button>
+                            <button type="button" id="apply-coupon-btn" class="coupon-btn" disabled>Aplicar</button>
                         </div>
                         <div id="coupon-messages"></div>
                     </div>
@@ -699,15 +713,19 @@
                 console.error('Error:', error);
                 showMessage('Error al aplicar el cupón', 'error');
             } finally {
-                applyBtn.disabled = false;
+                applyBtn.disabled = couponInput.value.trim() === '';
                 applyBtn.classList.remove('loading');
             }
         }
 
         // Event listeners
         applyBtn.addEventListener('click', applyCoupon);
+        couponInput.addEventListener('input', function () {
+            this.value = this.value.toUpperCase();
+            applyBtn.disabled = this.value.trim() === '';
+        });
         couponInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !applyBtn.disabled) {
                 applyCoupon();
             }
         });
