@@ -100,32 +100,6 @@
                             <i class="fas fa-exclamation-circle"></i> {{ coupon_error }}
                         </p>
                         {% endif %}
-
-                        {% if applied_coupon %}
-                        <div class="coupon-applied">
-                            <div>
-                                <i class="fas fa-ticket-alt"></i>
-                                <strong>{{ applied_coupon.code }}</strong>
-                                <span class="coupon-pct">-{{ applied_coupon.discount_percent }}%</span>
-                            </div>
-                            <form method="POST" action="{% url 'remove_coupon' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="coupon-remove">Quitar</button>
-                            </form>
-                        </div>
-                        {% else %}
-                        <form method="POST" action="{% url 'apply_coupon' %}" class="coupon-form-inline">
-                            {% csrf_token %}
-                            <input
-                                type="text"
-                                name="code"
-                                placeholder="Código de cupón"
-                                autocomplete="off"
-                                required
-                            />
-                            <button type="submit"><i class="fas fa-tag"></i> Aplicar</button>
-                        </form>
-                        {% endif %}
                     </div>
 
                     <div class="summary-row">
