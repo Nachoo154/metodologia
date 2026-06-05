@@ -88,17 +88,37 @@
 
                 <aside class="confirm-card confirm-summary">
                     <h3><i class="fas fa-receipt"></i> Resumen del pedido</h3>
+
+                    <div class="coupon-section">
+                        {% if coupon_success %}
+                        <p class="coupon-msg coupon-msg--ok">
+                            <i class="fas fa-check-circle"></i> {{ coupon_success }}
+                        </p>
+                        {% endif %}
+                        {% if coupon_error %}
+                        <p class="coupon-msg coupon-msg--err">
+                            <i class="fas fa-exclamation-circle"></i> {{ coupon_error }}
+                        </p>
+                        {% endif %}
+                    </div>
+
                     <div class="summary-row">
                         <span>Subtotal</span>
                         <span>${{ total }}</span>
                     </div>
+                    {% if applied_coupon %}
+                    <div class="summary-row summary-row--discount">
+                        <span>Descuento ({{ applied_coupon.discount_percent }}%)</span>
+                        <span>-${{ discount_amount }}</span>
+                    </div>
+                    {% endif %}
                     <div class="summary-row">
                         <span>Env&iacute;o</span>
                         <span>Gratis</span>
                     </div>
                     <div class="summary-row total">
                         <span>Total</span>
-                        <span>${{ total }}</span>
+                        <span>${{ total_final }}</span>
                     </div>
 
                     <div class="summary-actions">

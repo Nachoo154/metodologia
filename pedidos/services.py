@@ -90,3 +90,39 @@ def update_purchase_status(purchase_id, status):
         .eq("id", purchase_id)
         .execute()
     )
+
+
+def get_all_coupons():
+    return (
+        supabase
+        .table("coupons")
+        .select("*")
+        .order("created_at", desc=True)
+        .execute()
+    )
+
+
+def create_coupon(data):
+    return supabase.table("coupons").insert(data).execute()
+
+
+def get_active_coupon_by_code(code):
+    return (
+        supabase
+        .table("coupons")
+        .select("*")
+        .eq("code", code)
+        .eq("active", True)
+        .limit(1)
+        .execute()
+    )
+
+
+def set_coupon_active(coupon_id, active):
+    return (
+        supabase
+        .table("coupons")
+        .update({"active": active})
+        .eq("id", coupon_id)
+        .execute()
+    )
