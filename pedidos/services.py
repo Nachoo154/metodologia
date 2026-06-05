@@ -19,11 +19,13 @@ def create_purchase_rows(rows):
     return supabase.table("purchases").insert(rows).execute()
 
 
-def finish_purchase(client, user_id, product_id, amount):
+def finish_purchase(client, user_id, product_id, amount, coupon_id=None, discount_amount=0):
     return client.rpc("finish_purchase", {
         "input_user_id": int(user_id),
         "input_product_id": int(product_id),
         "input_amount": int(amount),
+        "input_coupon_id": coupon_id,
+        "input_discount_amount": float(discount_amount),
     }).execute()
 
 

@@ -88,14 +88,24 @@
 
                 <aside class="confirm-card confirm-summary">
                     <h3><i class="fas fa-receipt"></i> Resumen del pedido</h3>
+
                     <div class="summary-row">
                         <span>Subtotal</span>
-                        <span>${{ total }}</span>
+                        <span>${{ subtotal }}</span>
                     </div>
+
+                    {% if coupon %}
+                    <div class="summary-row">
+                        <span>Cup&oacute;n {{ coupon.code }}</span>
+                        <span>- ${{ discount_amount }}</span>
+                    </div>
+                    {% endif %}
+
                     <div class="summary-row">
                         <span>Env&iacute;o</span>
                         <span>Gratis</span>
                     </div>
+
                     <div class="summary-row total">
                         <span>Total</span>
                         <span>${{ total }}</span>
@@ -108,7 +118,10 @@
                                 <i class="fas fa-lock"></i> Finalizar pedido
                             </button>
                         </form>
-                        <a href="{% url 'cart' %}" class="back-btn"><i class="fas fa-pen"></i> Modificar carrito</a>
+
+                        <a href="{% url 'cart' %}" class="back-btn">
+                            <i class="fas fa-pen"></i> Modificar carrito
+                        </a>
                     </div>
 
                     <div class="secure-note">

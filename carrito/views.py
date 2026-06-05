@@ -65,14 +65,27 @@ def cart_view(request):
                 "stock": item["stock"],
             },
             "quantity": item["quantity"],
-            "subtotal": item["subtotal"],
+            "subtotal": round(item["subtotal"], 2),
         })
+
+    subtotal = round(payload["total"], 2)
+    coupon = request.session.get("coupon")
+    discount_amount = 0
+
+    if coupon:
+        discount_amount = subtotal * (coupon["discount_percent"] / 100)
+
+    discount_amount = round(discount_amount, 2)
+    final_total = round(subtotal - discount_amount, 2)
 
     checkout_success = request.session.pop("checkout_success", False)
 
     return render(request, "carrito/carrito.html", {
         "items": items,
-        "total": payload["total"],
+        "total": final_total,
+        "subtotal": subtotal,
+        "coupon": coupon,
+        "discount_amount": discount_amount,
         "user_email": request.session.get("user_email"),
         "checkout_success": checkout_success,
     })
@@ -184,12 +197,25 @@ def checkout_confirm(request):
                 "stock": item["stock"],
             },
             "quantity": item["quantity"],
-            "subtotal": item["subtotal"],
+            "subtotal": round(item["subtotal"], 2),
         })
+
+    subtotal = round(payload["total"], 2)
+    coupon = request.session.get("coupon")
+    discount_amount = 0
+
+    if coupon:
+        discount_amount = subtotal * (coupon["discount_percent"] / 100)
+
+    discount_amount = round(discount_amount, 2)
+    final_total = round(subtotal - discount_amount, 2)
 
     return render(request, "carrito/cart_confirm.html", {
         "items": items,
-        "total": payload["total"],
+        "subtotal": subtotal,
+        "coupon": coupon,
+        "discount_amount": discount_amount,
+        "total": final_total,
         "cart_count": payload["cart_count"],
         "user_email": user_email,
         "profile": profile,
@@ -227,6 +253,19 @@ def checkout(request):
         request.session.modified = True
         return redirect("/carrito/confirmar/")
 
+    coupon = request.session.get("coupon")
+    coupon_id = None
+    discount_amount = 0
+
+    if coupon:
+        coupon_id = coupon["id"]
+
+        payload = get_cart_payload(request)
+        subtotal = round(payload["total"], 2)
+
+        discount_amount = subtotal * (coupon["discount_percent"] / 100)
+        discount_amount = round(discount_amount, 2)
+
     client = get_user_supabase(user_token)
     processed = []
 
@@ -234,7 +273,14 @@ def checkout(request):
         qty = max(int(quantity), 1)
 
         try:
-            finish_purchase(client, profile["id"], product_id, qty)
+            finish_purchase(
+                client,
+                profile["id"],
+                product_id,
+                qty,
+                coupon_id,
+                discount_amount,
+            )
             processed.append(product_id)
 
         except Exception as e:
@@ -250,6 +296,7 @@ def checkout(request):
             return redirect("/carrito/confirmar/")
 
     request.session["cart"] = {}
+    request.session.pop("coupon", None)
     request.session["checkout_success"] = True
     request.session.modified = True
 

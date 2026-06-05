@@ -1,5 +1,5 @@
 from django.shortcuts import redirect, render
-
+from core.supabase_client import supabase
 from pedidos.services import get_profile_by_email, get_recent_purchases, update_purchase_status
 
 
@@ -38,3 +38,34 @@ def cambiar_estado_pedido(request, id):
         update_purchase_status(id, status)
 
     return redirect("vendedor_dashboard")
+
+def apply_coupon(request):
+    if request.method == "POST":
+        coupon_code = request.POST.get("coupon_code", "").strip().upper()
+
+        response = (
+            supabase
+            .table("coupons")
+            .select("*")
+            .eq("code", coupon_code)
+            .eq("active", True)
+            .execute()
+        )
+
+        coupons = response.data
+
+        if not coupons:
+            print("Cupón inválido")
+            return redirect("cart")
+
+        coupon = coupons[0]
+
+        request.session["coupon"] = {
+            "id": coupon["id"],
+            "code": coupon["code"],
+            "discount_percent": float(coupon["discount_percent"]),
+        }
+
+        print("Cupón aplicado:", coupon["code"])
+
+    return redirect("cart")
