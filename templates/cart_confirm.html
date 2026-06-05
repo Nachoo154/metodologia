@@ -316,6 +316,139 @@
         margin-top: 0.15rem;
     }
 
+    .coupon-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid rgba(31, 41, 55, 0.1);
+    }
+
+    .coupon-input-group {
+        display: flex;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .coupon-input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid rgba(31, 41, 55, 0.18);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        text-transform: uppercase;
+        transition: border-color 0.2s;
+    }
+
+    .coupon-input::placeholder {
+        text-transform: none;
+    }
+
+    .coupon-input:focus {
+        outline: none;
+        border-color: #f56a6a;
+        box-shadow: 0 0 0 3px rgba(245, 106, 106, 0.1);
+    }
+
+    .coupon-btn {
+        padding: 0.75rem 1rem;
+        background: linear-gradient(135deg, #f56a6a 0%, #ef4444 100%);
+        color: #ffffff !important;
+        box-shadow: none !important;
+        border: 0;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        opacity: 1;
+        line-height: 1;
+        height: auto;
+        transition: filter 0.2s, opacity 0.2s, transform 0.2s;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .coupon-btn:hover {
+        box-shadow: none !important;
+    }
+
+    .coupon-btn:hover:not(:disabled) {
+        filter: brightness(1.05);
+    }
+
+    .coupon-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(0.3);
+    }
+
+    .coupon-btn.loading {
+        position: relative;
+    }
+
+    .coupon-btn.loading::after {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: translateY(-50%) rotate(360deg); }
+    }
+
+    .coupon-message {
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .coupon-message i {
+        margin-top: 0.2rem;
+        flex-shrink: 0;
+    }
+
+    .coupon-message.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #047857;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .coupon-message.error {
+        background: rgba(239, 68, 68, 0.1);
+        color: #991b1b;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .summary-row.discount {
+        color: #047857;
+        font-weight: 600;
+        border-top: 1px solid rgba(31, 41, 55, 0.1);
+        margin-top: 0.6rem;
+        padding-top: 0.6rem;
+    }
+
+    .summary-row.discount span:last-child {
+        color: #047857;
+    }
+
     .checkout-error {
         display: flex;
         align-items: flex-start;
@@ -431,10 +564,29 @@
                 </div>
 
                 <aside class="confirm-card confirm-summary">
+                    <div class="coupon-section">
+                        <h4 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7280;"><i class="fas fa-tag"></i> Cupón de descuento</h4>
+                        <div class="coupon-input-group">
+                            <input 
+                                type="text" 
+                                id="coupon-input" 
+                                class="coupon-input" 
+                                placeholder="Ingresa tu código de cupón..."
+                                autocomplete="off"
+                            />
+                            <button type="button" id="apply-coupon-btn" class="coupon-btn" disabled>Aplicar</button>
+                        </div>
+                        <div id="coupon-messages"></div>
+                    </div>
+
                     <h3><i class="fas fa-receipt"></i> Resumen del pedido</h3>
                     <div class="summary-row">
                         <span>Subtotal</span>
-                        <span>${{ total }}</span>
+                        <span id="subtotal-amount">${{ total }}</span>
+                    </div>
+                    <div id="discount-row" class="summary-row discount" style="display: none;">
+                        <span><i class="fas fa-check-circle"></i> Descuento (<span id="discount-percent">0</span>%)</span>
+                        <span id="discount-amount">-$0</span>
                     </div>
                     <div class="summary-row">
                         <span>Env&iacute;o</span>
@@ -442,7 +594,7 @@
                     </div>
                     <div class="summary-row total">
                         <span>Total</span>
-                        <span>${{ total }}</span>
+                        <span id="final-total">${{ total }}</span>
                     </div>
 
                     <div class="summary-actions">
@@ -468,13 +620,123 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        var form = document.getElementById('finalize-form');
-        var btn = document.getElementById('finalize-btn');
-        if (!form || !btn) return;
-        form.addEventListener('submit', function () {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        // Variables - obtener el subtotal del elemento visible
+        const subtotalText = document.getElementById('subtotal-amount').textContent;
+        const subtotal = parseFloat(subtotalText.replace('$', '')) || 0;
+        let appliedCoupon = null;
+        let discountPercentage = 0;
+
+        // Elementos
+        const couponInput = document.getElementById('coupon-input');
+        const applyBtn = document.getElementById('apply-coupon-btn');
+        const messagesContainer = document.getElementById('coupon-messages');
+        const discountRow = document.getElementById('discount-row');
+        const discountPercentSpan = document.getElementById('discount-percent');
+        const discountAmountSpan = document.getElementById('discount-amount');
+        const finalTotalSpan = document.getElementById('final-total');
+        const finalizeForm = document.getElementById('finalize-form');
+        const finalizeBtn = document.getElementById('finalize-btn');
+
+        // Función para mostrar mensajes
+        function showMessage(message, type = 'success') {
+            messagesContainer.innerHTML = `
+                <div class="coupon-message ${type}">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+        }
+
+        // Función para actualizar el total
+        function updateTotal() {
+            const discountAmount = (subtotal * discountPercentage) / 100;
+            const finalTotal = subtotal - discountAmount;
+            
+            discountPercentSpan.textContent = discountPercentage;
+            discountAmountSpan.textContent = '-$' + discountAmount.toFixed(2);
+            finalTotalSpan.textContent = '$' + finalTotal.toFixed(2);
+
+            if (discountPercentage > 0) {
+                discountRow.style.display = 'flex';
+            } else {
+                discountRow.style.display = 'none';
+            }
+        }
+
+        // Función para aplicar cupón
+        async function applyCoupon() {
+            const code = couponInput.value.trim();
+            
+            if (!code) {
+                showMessage('Por favor, ingresa un código de cupón', 'error');
+                return;
+            }
+
+            applyBtn.disabled = true;
+            applyBtn.classList.add('loading');
+            messagesContainer.innerHTML = '';
+
+            try {
+                const response = await fetch('{% url "apply_coupon" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ code: code })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    appliedCoupon = data.coupon;
+                    discountPercentage = data.coupon.discount_percent;
+                    updateTotal();
+                    showMessage(`¡Cupón aplicado! Descuento: ${data.coupon.discount_percent}%`, 'success');
+                    
+                    // Agregar el cupón al formulario
+                    let couponField = document.getElementById('applied-coupon-id');
+                    if (!couponField) {
+                        couponField = document.createElement('input');
+                        couponField.type = 'hidden';
+                        couponField.id = 'applied-coupon-id';
+                        couponField.name = 'coupon_id';
+                        finalizeForm.appendChild(couponField);
+                    }
+                    couponField.value = data.coupon.id;
+                } else {
+                    showMessage(data.message || 'Cupón inválido o expirado', 'error');
+                    discountPercentage = 0;
+                    updateTotal();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error al aplicar el cupón', 'error');
+            } finally {
+                applyBtn.disabled = couponInput.value.trim() === '';
+                applyBtn.classList.remove('loading');
+            }
+        }
+
+        // Event listeners
+        applyBtn.addEventListener('click', applyCoupon);
+        couponInput.addEventListener('input', function () {
+            this.value = this.value.toUpperCase();
+            applyBtn.disabled = this.value.trim() === '';
         });
+        couponInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !applyBtn.disabled) {
+                applyCoupon();
+            }
+        });
+
+        // Finalizar compra
+        if (finalizeForm && finalizeBtn) {
+            finalizeForm.addEventListener('submit', function () {
+                finalizeBtn.disabled = true;
+                finalizeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            });
+        }
     });
 </script>
 {% endblock %}

@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
 from core.supabase_client import get_user_supabase
-from pedidos.services import finish_purchase, get_profile_by_email
+from pedidos.services import finish_purchase, get_profile_by_email, get_active_coupon_by_code
 from productos.services import get_product
 from usuarios.views import require_user
 
@@ -187,7 +187,7 @@ def checkout_confirm(request):
             "subtotal": item["subtotal"],
         })
 
-    return render(request, "carrito/cart_confirm.html", {
+    return render(request, "cart_confirm.html", {
         "items": items,
         "total": payload["total"],
         "cart_count": payload["cart_count"],
@@ -251,6 +251,7 @@ def checkout(request):
 
     request.session["cart"] = {}
     request.session["checkout_success"] = True
+    request.session.pop("applied_coupon", None)  # Limpiar el cupón después de la compra
     request.session.modified = True
 
     return redirect("/carrito/")
@@ -266,3 +267,66 @@ def _extract_rpc_message(error):
             return line
 
     return "No se pudo completar la compra. Intentá de nuevo."
+
+
+@require_user
+def apply_coupon(request):
+    """Aplica un cupón de descuento al carrito"""
+    if request.method != "POST":
+        return JsonResponse({
+            "status": "error",
+            "message": "Método no permitido"
+        }, status=405)
+
+    try:
+        data = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({
+            "status": "error",
+            "message": "Datos inválidos"
+        }, status=400)
+
+    code = data.get("code", "").strip()
+
+    if not code:
+        return JsonResponse({
+            "status": "error",
+            "message": "Por favor, ingresa un código de cupón"
+        })
+
+    try:
+        # Buscar el cupón en la base de datos
+        coupon_res = get_active_coupon_by_code(code)
+        
+        if not coupon_res.data or len(coupon_res.data) == 0:
+            return JsonResponse({
+                "status": "error",
+                "message": "Cupón inválido o expirado"
+            })
+
+        coupon = coupon_res.data[0]
+
+        # Guardar el cupón en la sesión
+        request.session["applied_coupon"] = {
+            "id": coupon["id"],
+            "code": coupon["code"],
+            "discount_percent": coupon["discount_percent"]
+        }
+        request.session.modified = True
+
+        return JsonResponse({
+            "status": "success",
+            "message": f"Cupón aplicado: {coupon['discount_percent']}% de descuento",
+            "coupon": {
+                "id": coupon["id"],
+                "code": coupon["code"],
+                "discount_percent": coupon["discount_percent"]
+            }
+        })
+
+    except Exception as e:
+        logger.exception("Error applying coupon")
+        return JsonResponse({
+            "status": "error",
+            "message": "Error al aplicar el cupón. Intentá de nuevo."
+        })
