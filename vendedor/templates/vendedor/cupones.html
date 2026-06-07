@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    .vendedor-shell {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 4rem;
+    }
+
+    .vendedor-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.75rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .vendedor-hero h2 {
+        margin: 0;
+        font-size: 1.85rem;
+        color: #111827;
+    }
+
+    .vendedor-hero .hero-sub {
+        margin: 0.25rem 0 0;
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+
+    .vendedor-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .back-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        background: #f3f4f6;
+        color: #374151 !important;
+        padding: 0.55rem 0.95rem;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: background 0.15s;
+        white-space: nowrap;
+    }
+
+    .back-pill:hover { background: #e5e7eb; }
+
+    .notice {
+        padding: 0.85rem 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.25rem;
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+    .notice.success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .notice.error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+    .card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 1.4rem 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .card h3 {
+        margin: 0 0 1rem;
+        font-size: 1.05rem;
+        color: #111827;
+    }
+
+    .coupon-form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    @media (max-width: 640px) {
+        .coupon-form-row { grid-template-columns: 1fr; }
+    }
+
+    .coupon-form-row label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .coupon-form-row input {
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        text-transform: uppercase;
+    }
+
+    .coupon-form-row input[type="number"] { text-transform: none; }
+
+    .coupon-form-row input:focus {
+        outline: none;
+        border-color: #f56a6a;
+        box-shadow: 0 0 0 3px rgba(245, 106, 106, 0.15);
+    }
+
+    .submit-btn {
+        background: #111827;
+        color: #fff !important;
+        border: 0;
+        padding: 0.65rem 1.2rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        height: fit-content;
+        box-shadow: none !important;
+        transition: background 0.15s;
+    }
+    .submit-btn:hover { background: #1f2937; }
+
+    .table-wrap { overflow-x: auto; }
+
+    table.coupon-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .coupon-table th,
+    .coupon-table td {
+        padding: 0.75rem 0.9rem;
+        text-align: left;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .coupon-table th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #6b7280;
+        background: #f9fafb;
+    }
+
+    .coupon-table .mono {
+        font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .pill {
+        display: inline-block;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .pill.active   { background: #d1fae5; color: #065f46; }
+    .pill.inactive { background: #fee2e2; color: #991b1b; }
+
+    .toggle-btn {
+        background: transparent;
+        border: 1px solid #d1d5db;
+        color: #374151 !important;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: none !important;
+        transition: background 0.15s, border-color 0.15s;
+    }
+    .toggle-btn:hover { background: #f3f4f6; }
+    .toggle-btn.deactivate { color: #991b1b !important; border-color: #fecaca; }
+    .toggle-btn.deactivate:hover { background: #fef2f2; }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6b7280;
+        background: #fafafa;
+        border: 1px dashed #d1d5db;
+        border-radius: 12px;
+    }
+</style>
+
+<div class="vendedor-shell">
+
+    <div class="vendedor-hero">
+        <div>
+            <h2>Cupones de descuento</h2>
+            <p class="hero-sub">Cre&aacute; y activ&aacute; los cupones disponibles para los clientes.</p>
+        </div>
+        <div class="vendedor-actions">
+            <a href="{% url 'vendedor_dashboard' %}" class="back-pill">
+                <i class="fas fa-arrow-left"></i> Volver a pedidos
+            </a>
+        </div>
+    </div>
+
+    {% if success %}
+    <div class="notice success">{{ success }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="notice error">{{ error }}</div>
+    {% endif %}
+
+    <section class="card">
+        <h3>Crear nuevo cup&oacute;n</h3>
+        <form method="POST" action="{% url 'vendedor_cupones' %}">
+            {% csrf_token %}
+            <div class="coupon-form-row">
+                <label>
+                    C&oacute;digo
+                    <input type="text" name="code" placeholder="DESCUENTO10" maxlength="50" required />
+                </label>
+                <label>
+                    Porcentaje de descuento
+                    <input type="number" name="discount_percent" placeholder="10" min="0.01" max="100" step="0.01" required />
+                </label>
+                <button type="submit" class="submit-btn">Crear cup&oacute;n</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="card">
+        <h3>Cupones existentes</h3>
+        {% if coupons %}
+        <div class="table-wrap">
+            <table class="coupon-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>C&oacute;digo</th>
+                        <th>Descuento</th>
+                        <th>Estado</th>
+                        <th>Creado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for coupon in coupons %}
+                    <tr>
+                        <td>{{ coupon.id }}</td>
+                        <td><span class="mono">{{ coupon.code }}</span></td>
+                        <td>{{ coupon.discount_percent }}%</td>
+                        <td>
+                            {% if coupon.active %}
+                            <span class="pill active">Activo</span>
+                            {% else %}
+                            <span class="pill inactive">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ coupon.created_at|slice:":10" }}</td>
+                        <td>
+                            <form method="POST" action="{% url 'vendedor_cupon_toggle' coupon.id %}">
+                                {% csrf_token %}
+                                <input
+                                    type="hidden"
+                                    name="active"
+                                    value="{% if coupon.active %}false{% else %}true{% endif %}"
+                                />
+                                <button
+                                    type="submit"
+                                    class="toggle-btn {% if coupon.active %}deactivate{% endif %}"
+                                >
+                                    {% if coupon.active %}Desactivar{% else %}Activar{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Todav&iacute;a no hay cupones creados.</p>
+        </div>
+        {% endif %}
+    </section>
+
+</div>
+
+{% endblock %}

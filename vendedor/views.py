@@ -1,14 +1,20 @@
+import logging
 from datetime import datetime
 
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
 from pedidos.services import (
+    create_coupon,
+    get_all_coupons,
     get_profile_by_email,
     get_recent_purchases,
     get_top_selling_products,
+    set_coupon_active,
     update_purchase_status
 )
+
+logger = logging.getLogger(__name__)
 
 
 def require_vendedor(view_func):
@@ -89,3 +95,63 @@ def reporte_mas_vendidos(request):
     response = HttpResponse(content, content_type="text/plain; charset=utf-8")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
+
+
+@require_vendedor
+def vendedor_cupones(request):
+    coupons = []
+    error = None
+    success = None
+
+    if request.method == "POST":
+        code = request.POST.get("code", "").strip().upper()
+        discount_raw = request.POST.get("discount_percent", "").strip()
+
+        try:
+            if not code:
+                raise ValueError("El código no puede estar vacío")
+
+            discount = float(discount_raw)
+            if discount <= 0 or discount > 100:
+                raise ValueError("El descuento debe estar entre 0 y 100")
+
+            create_coupon({
+                "code": code,
+                "discount_percent": discount,
+                "active": True,
+            })
+            success = f"Cupón '{code}' creado correctamente."
+        except ValueError as e:
+            error = str(e)
+        except Exception as e:
+            logger.error(f"Coupon create error: {str(e)}")
+            error = f"No se pudo crear el cupón: {e}"
+
+    try:
+        res = get_all_coupons()
+        coupons = res.data if res.data else []
+    except Exception as e:
+        logger.error(f"Vendedor coupons fetch error: {str(e)}")
+        if not error:
+            error = str(e)
+
+    return render(request, "vendedor/cupones.html", {
+        "coupons": coupons,
+        "error": error,
+        "success": success,
+    })
+
+
+@require_vendedor
+def vendedor_cupon_toggle(request, id):
+    if request.method != "POST":
+        return redirect("vendedor_cupones")
+
+    active = request.POST.get("active") == "true"
+
+    try:
+        set_coupon_active(id, active)
+    except Exception as e:
+        logger.error(f"Coupon toggle error: {str(e)}")
+
+    return redirect("vendedor_cupones")

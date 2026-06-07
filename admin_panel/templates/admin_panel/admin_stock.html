@@ -7,6 +7,73 @@
     <title>Gesti&oacute;n de stock - Panel Admin</title>
     <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}" />
     <link rel="stylesheet" href="{% static 'css/admin_stock.css' %}" />
+    <style>
+      .stock-config-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 18px 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      }
+
+      .stock-config-card label {
+        display: block;
+        color: #4b5563;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+
+      .stock-config-card .hint {
+        display: block;
+        font-weight: 400;
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 4px;
+      }
+
+      .stock-config-card .stock-config-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .stock-config-card input.stock-min-input {
+        width: 130px;
+        padding: 9px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+        font-variant-numeric: tabular-nums;
+        background: #fff;
+        color: #111827;
+        box-sizing: border-box;
+      }
+
+      .stock-config-card input.stock-min-input:focus {
+        outline: none;
+        border-color: #1a1a2e;
+        box-shadow: 0 0 0 3px rgba(26, 26, 46, 0.15);
+      }
+
+      .stock-config-card button.stock-min-save {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: #fff;
+        border: 0;
+        padding: 9px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .stock-config-card button.stock-min-save:hover {
+        transform: translateY(-1px);
+      }
+    </style>
   </head>
 
   <body>
@@ -21,9 +88,39 @@
     </header>
 
     <div class="container">
+      {% if success %}
+      <div class="success">{{ success }}</div>
+      {% endif %}
       {% if error %}
       <div class="error">{{ error }}</div>
       {% endif %}
+
+      <section class="section">
+        <div class="section-header">
+          <h2>Configuraci&oacute;n de stock m&iacute;nimo</h2>
+        </div>
+        <form method="POST" action="{% url 'admin_stock' %}" class="stock-config-card">
+          {% csrf_token %}
+          <label for="stock-minimo-input">
+            Umbral de stock m&iacute;nimo
+            <span class="hint">
+              Los productos con stock menor o igual a este valor se mostrar&aacute;n abajo.
+            </span>
+          </label>
+          <div class="stock-config-row">
+            <input
+              type="number"
+              id="stock-minimo-input"
+              class="stock-min-input"
+              name="stock_minimo"
+              min="0"
+              value="{{ stock_minimo }}"
+              required
+            />
+            <button type="submit" class="stock-min-save">Guardar</button>
+          </div>
+        </form>
+      </section>
 
       <section class="section">
         <div class="section-header">

@@ -20,7 +20,4 @@ urlpatterns = [
     path("stock/", views.admin_stock, name="admin_stock"),
     path("stock/reporte/", views.admin_stock_report, name="admin_stock_report"),
     path("stock/<int:id>/actualizar/", views.admin_stock_update, name="admin_stock_update"),
-
-    path("cupones/", views.admin_coupons, name="admin_coupons"),
-    path("cupones/<int:id>/toggle/", views.admin_coupon_toggle, name="admin_coupon_toggle"),
 ]

@@ -17,18 +17,18 @@ from productos.services import (
     update_product,
 )
 from productos.utils import build_product_data
-from pedidos.services import (
-    create_coupon,
-    get_all_coupons,
-    get_recent_purchases,
-    set_coupon_active,
-)
+from pedidos.services import get_recent_purchases
+
+from .models import Configuracion
 
 logger = logging.getLogger(__name__)
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
-STOCK_MINIMO = 5
+
+
+def get_stock_minimo():
+    return Configuracion.get_solo().stock_minimo
 
 
 def require_admin(view_func):
@@ -100,8 +100,9 @@ def admin_dashboard(request):
         logger.exception("Admin dashboard purchases error")
         errors.append(f"Compras: {e}")
 
+    stock_minimo = get_stock_minimo()
     low_stock_count = sum(
-        1 for p in products if (p.get("stock") or 0) <= STOCK_MINIMO
+        1 for p in products if (p.get("stock") or 0) <= stock_minimo
     )
 
     context = {
@@ -342,21 +343,38 @@ def admin_purchases_data(request):
 def admin_stock(request):
     products = []
     error = None
+    success = None
+    config = Configuracion.get_solo()
+
+    if request.method == "POST":
+        try:
+            new_min = int(request.POST.get("stock_minimo", ""))
+            if new_min < 0:
+                raise ValueError("El stock mínimo no puede ser negativo")
+            config.stock_minimo = new_min
+            config.save()
+            success = f"Stock mínimo actualizado a {new_min}."
+        except (TypeError, ValueError) as e:
+            error = str(e) or "El stock mínimo ingresado no es válido."
+
+    stock_minimo = config.stock_minimo
 
     try:
         res = get_all_products()
         all_products = res.data if res.data else []
-        products = [p for p in all_products if (p.get("stock") or 0) <= STOCK_MINIMO]
+        products = [p for p in all_products if (p.get("stock") or 0) <= stock_minimo]
         products.sort(key=lambda p: p.get("stock") or 0)
     except Exception as e:
         logger.error(f"Admin stock fetch error: {str(e)}")
-        error = str(e)
+        if not error:
+            error = str(e)
 
     return render(request, "admin_panel/admin_stock.html", {
         "products": products,
-        "stock_minimo": STOCK_MINIMO,
+        "stock_minimo": stock_minimo,
         "low_stock_count": len(products),
         "error": error,
+        "success": success,
     })
 
 
@@ -371,11 +389,12 @@ def admin_stock_report(request):
 
     products.sort(key=lambda p: p.get("stock") or 0)
 
+    stock_minimo = get_stock_minimo()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     lines = [
         "REPORTE DE STOCK DE PRODUCTOS",
         f"Generado: {timestamp}",
-        f"Stock minimo configurado: {STOCK_MINIMO}",
+        f"Stock minimo configurado: {stock_minimo}",
         "-" * 60,
         f"{'ID':<6}{'NOMBRE':<35}{'STOCK':>8}  ESTADO",
         "-" * 60,
@@ -383,7 +402,7 @@ def admin_stock_report(request):
 
     for p in products:
         stock = p.get("stock") or 0
-        estado = "BAJO" if stock <= STOCK_MINIMO else "OK"
+        estado = "BAJO" if stock <= stock_minimo else "OK"
         nombre = (p.get("name") or "")[:34]
         lines.append(f"{str(p.get('id', '')):<6}{nombre:<35}{stock:>8}  {estado}")
 
@@ -391,7 +410,7 @@ def admin_stock_report(request):
     lines.append(f"Total de productos: {len(products)}")
     lines.append(
         f"Productos con stock minimo: "
-        f"{sum(1 for p in products if (p.get('stock') or 0) <= STOCK_MINIMO)}"
+        f"{sum(1 for p in products if (p.get('stock') or 0) <= stock_minimo)}"
     )
 
     content = "\n".join(lines) + "\n"
@@ -431,8 +450,9 @@ def admin_users(request):
     try:
         res = get_all_products()
         all_products = res.data if res.data else []
+        stock_minimo = get_stock_minimo()
         low_stock_count = sum(
-            1 for p in all_products if (p.get("stock") or 0) <= STOCK_MINIMO
+            1 for p in all_products if (p.get("stock") or 0) <= stock_minimo
         )
     except Exception as e:
         logger.error(f"Admin users low_stock_count error: {str(e)}")
@@ -454,61 +474,3 @@ def admin_update_user_role(request, id):
     return redirect("admin_users")
 
 
-@require_admin
-def admin_coupons(request):
-    coupons = []
-    error = None
-    success = None
-
-    if request.method == "POST":
-        code = request.POST.get("code", "").strip().upper()
-        discount_raw = request.POST.get("discount_percent", "").strip()
-
-        try:
-            if not code:
-                raise ValueError("El código no puede estar vacío")
-
-            discount = float(discount_raw)
-            if discount <= 0 or discount > 100:
-                raise ValueError("El descuento debe estar entre 0 y 100")
-
-            create_coupon({
-                "code": code,
-                "discount_percent": discount,
-                "active": True,
-            })
-            success = f"Cupón '{code}' creado correctamente."
-        except ValueError as e:
-            error = str(e)
-        except Exception as e:
-            logger.error(f"Coupon create error: {str(e)}")
-            error = f"No se pudo crear el cupón: {e}"
-
-    try:
-        res = get_all_coupons()
-        coupons = res.data if res.data else []
-    except Exception as e:
-        logger.error(f"Admin coupons fetch error: {str(e)}")
-        if not error:
-            error = str(e)
-
-    return render(request, "admin_panel/admin_coupons.html", {
-        "coupons": coupons,
-        "error": error,
-        "success": success,
-    })
-
-
-@require_admin
-def admin_coupon_toggle(request, id):
-    if request.method != "POST":
-        return redirect("admin_coupons")
-
-    active = request.POST.get("active") == "true"
-
-    try:
-        set_coupon_active(id, active)
-    except Exception as e:
-        logger.error(f"Coupon toggle error: {str(e)}")
-
-    return redirect("admin_coupons")
