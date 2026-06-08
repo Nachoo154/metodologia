@@ -304,3 +304,27 @@
 - Intentar generar el reporte sin permisos de vendedor → falla.
 
 **Story points:** 4.
+
+## Definition of Ready (DoR)
+
+Una historia de usuario se considera lista para ser tomada en un sprint cuando cumple con las siguientes condiciones:
+
+- La historia está escrita en formato "Como [rol], quiero [acción], para [objetivo]".
+- Tiene criterios de aceptación claros y verificables.
+- Está estimada en story points por el equipo.
+- Las dependencias con otras historias están identificadas.
+- El alcance está acotado y puede completarse dentro de un sprint.
+- Fue revisada y comprendida por el equipo de desarrollo.
+- Cuenta con la priorización asignada por el Product Owner.
+
+## Definition of Done (DoD)
+
+Una historia de usuario se considera terminada cuando cumple con las siguientes condiciones:
+
+- El código fue desarrollado siguiendo los estándares definidos por el equipo.
+- Todos los criterios de aceptación fueron cumplidos.
+- Las pruebas de usuario definidas pasaron correctamente.
+- El código fue revisado e integrado a la rama principal sin conflictos.
+- La funcionalidad fue probada en el entorno correspondiente.
+- La documentación asociada fue actualizada cuando correspondía.
+- La historia fue aceptada por el Product Owner.
