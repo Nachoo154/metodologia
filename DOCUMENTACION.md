@@ -1,5 +1,13 @@
 # Documentación Trabajo Práctico Metodología
 
+## Stack tecnológico
+
+- **Python** (Backend): lenguaje de programación principal utilizado para implementar la lógica del servidor y las reglas de negocio de la aplicación.
+- **Django** (Backend): framework web de Python empleado para gestionar el enrutamiento, las vistas, los formularios y la comunicación con la base de datos.
+- **HTML** (Frontend): lenguaje de marcado utilizado para estructurar el contenido de las páginas y plantillas renderizadas por Django.
+- **CSS** (Frontend): lenguaje de estilos usado para dar formato visual a la interfaz, definir la disposición de los elementos y mejorar la experiencia de usuario.
+- **Supabase** (Base de datos): plataforma basada en PostgreSQL utilizada como base de datos para almacenar usuarios, productos, stock, compras y demás información persistente del sistema.
+
 ## Grupo 8
 
 ### Integrantes
